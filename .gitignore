@@ -1,0 +1,43 @@
+# ─── Next.js build outputs ────────────────────────────────────────────────────
+app/.next/
+app/out/
+app/build/
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+app/node_modules/
+**/node_modules/
+
+# ─── 環境變數（絕對不能推）────────────────────────────────────────────────────
+**/.env.local
+**/.env.*.local
+app/.env*
+.env*
+
+# ─── TypeScript ───────────────────────────────────────────────────────────────
+app/*.tsbuildinfo
+app/next-env.d.ts
+
+# ─── Vercel ───────────────────────────────────────────────────────────────────
+app/.vercel/
+
+# ─── PWA ──────────────────────────────────────────────────────────────────────
+app/public/sw.js
+app/public/workbox-*.js
+
+# ─── Scripts output ───────────────────────────────────────────────────────────
+scripts/output/
+scripts/__pycache__/
+scripts/*.pyc
+
+# ─── Claude Code memory（含私人對話紀錄）─────────────────────────────────────
+.claude/
+
+# ─── 未用的 Gemini 生圖（非 pixel art 資產）──────────────────────────────────
+app/public/art/Gemini_Generated_Image_*.png
+
+# ─── IDE / OS ─────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
