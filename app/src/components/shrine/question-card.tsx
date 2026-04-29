@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Question } from '@/lib/question'
+import { play } from '@/lib/sfx'
+import { celebrate } from '@/components/shrine/confetti'
 
 interface QuestionCardProps {
   question: Question
@@ -22,24 +24,49 @@ export function QuestionCard({
   isLast,
 }: QuestionCardProps) {
   const [selected, setSelected] = useState<number | null>(null)
-  const [startTime, setStartTime] = useState(() => Date.now())
+  const startTimeRef = useRef(Date.now())
   const [isNextFired, setIsNextFired] = useState(false)
+  const nextFiredRef = useRef(false)
+  const onNextRef = useRef(onNext)
 
-  useEffect(() => {
-    setSelected(null)
-    setStartTime(Date.now())
-    setIsNextFired(false)
-  }, [question])
+  useEffect(() => { onNextRef.current = onNext }, [onNext])
 
-  const handleChoice = (idx: number) => {
-    if (selected !== null) return
-    const ms = Date.now() - startTime
-    setSelected(idx)
-    onAnswer(idx, ms)
-  }
+  // key={currentIndex} 在父層保證每題 unmount/remount，不需要 reset effect
 
   const isAnswered = selected !== null
   const isCorrect = selected === question.correctIndex
+
+  // 答對 1.5s 後自動進下一題（timer path 不更新 state，component 即將 unmount）
+  useEffect(() => {
+    if (!isAnswered || !isCorrect) return
+    const timer = setTimeout(() => {
+      if (nextFiredRef.current) return
+      nextFiredRef.current = true
+      onNextRef.current()
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [isAnswered, isCorrect])
+
+  const handleChoice = (idx: number) => {
+    if (isAnswered) return
+    const ms = Date.now() - startTimeRef.current
+    setSelected(idx)
+    onAnswer(idx, ms)
+
+    if (idx === question.correctIndex) {
+      play('correct')
+      celebrate('small')
+    } else {
+      play('wrong')
+    }
+  }
+
+  const fireNext = () => {
+    if (nextFiredRef.current) return
+    nextFiredRef.current = true
+    setIsNextFired(true)
+    onNextRef.current()
+  }
 
   return (
     <motion.div
@@ -88,8 +115,7 @@ export function QuestionCard({
 
           if (isAnswered) {
             if (isThisCorrect) {
-              colorClass =
-                'border-emerald-500 bg-emerald-900/40 text-emerald-300'
+              colorClass = 'border-emerald-500 bg-emerald-900/40 text-emerald-300'
             } else if (isThisSelected) {
               colorClass = 'border-red-500 bg-red-900/40 text-red-300'
             } else {
@@ -110,7 +136,7 @@ export function QuestionCard({
         })}
       </div>
 
-      {/* 答題回饋 + 下一題按鈕 */}
+      {/* 答題回饋 */}
       <AnimatePresence>
         {isAnswered && (
           <motion.div
@@ -128,17 +154,25 @@ export function QuestionCard({
                 ? '正確！🎉'
                 : `答錯了 — 正確：${question.choices[question.correctIndex]}`}
             </p>
-            <button
-              onClick={() => {
-                if (isNextFired) return
-                setIsNextFired(true)
-                onNext()
-              }}
-              disabled={isNextFired}
-              className="w-full h-12 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-stone-950 font-semibold text-base transition-all duration-150"
-            >
-              {isLast ? '查看結果 🏮' : '下一題 →'}
-            </button>
+            {isCorrect ? (
+              // 答對：顯示倒數提示，可手動 skip
+              <button
+                onClick={fireNext}
+                disabled={isNextFired}
+                className="w-full h-12 rounded-xl bg-emerald-700 hover:bg-emerald-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-base transition-all duration-150"
+              >
+                {isLast ? '查看結果 🏮 (1.5s)' : '下一題 (1.5s)'}
+              </button>
+            ) : (
+              // 答錯：手動 next，讓 user 看清正解
+              <button
+                onClick={fireNext}
+                disabled={isNextFired}
+                className="w-full h-12 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-stone-950 font-semibold text-base transition-all duration-150"
+              >
+                {isLast ? '查看結果 🏮' : '下一題 →'}
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

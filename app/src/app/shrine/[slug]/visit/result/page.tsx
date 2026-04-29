@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { ResultConfetti } from './result-confetti'
 
 export default async function ResultPage({
   params,
@@ -102,6 +103,7 @@ export default async function ResultPage({
 
     return (
       <div className="bg-black min-h-screen flex justify-center">
+      <ResultConfetti fire={accuracy >= 80 || isGoshuinEarned} />
       <main className="relative w-full max-w-[480px] min-h-screen pb-24 flex flex-col items-center bg-stone-950">
         {/* 頂部結算 banner */}
         <div className="relative w-full">

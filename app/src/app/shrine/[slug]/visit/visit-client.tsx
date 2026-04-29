@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { QuestionCard } from '@/components/shrine/question-card'
 import { saveVisitAction } from '@/actions/visit'
+import { play } from '@/lib/sfx'
+import { celebrate } from '@/components/shrine/confetti'
 import type { Question } from '@/lib/question'
 import type { AnswerRecord } from '@/actions/visit'
 
@@ -31,8 +33,16 @@ export function VisitClient({
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
-  // ref 避免 stale closure 導致最後一題 answer 丟失
+  const [, setComboCount] = useState(0)
+  const [showCombo, setShowCombo] = useState(false)
   const answersRef = useRef<AnswerRecord[]>([])
+  const comboTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (comboTimerRef.current) clearTimeout(comboTimerRef.current)
+    }
+  }, [])
 
   const currentQuestion = questions[currentIndex]
   const isLast = currentIndex === questions.length - 1
@@ -40,15 +50,32 @@ export function VisitClient({
   const handleAnswer = useCallback(
     (choiceIndex: number, msTaken: number) => {
       const q = questions[currentIndex]
+      const isCorrect = choiceIndex === q.correctIndex
       answersRef.current = [
         ...answersRef.current,
         {
           word_id: q.word.id,
           question_type: q.type,
-          is_correct: choiceIndex === q.correctIndex,
+          is_correct: isCorrect,
           ms_taken: msTaken,
         },
       ]
+
+      if (isCorrect) {
+        setComboCount(prev => {
+          const next = prev + 1
+          if (next % 5 === 0) {
+            play('combo')
+            celebrate('big')
+            setShowCombo(true)
+            if (comboTimerRef.current) clearTimeout(comboTimerRef.current)
+            comboTimerRef.current = setTimeout(() => setShowCombo(false), 2000)
+          }
+          return next
+        })
+      } else {
+        setComboCount(0)
+      }
     },
     [currentIndex, questions]
   )
@@ -59,9 +86,9 @@ export function VisitClient({
       return
     }
 
-    // 最後一題 → 從 ref 取所有答案，儲存並跳結算頁
-    const allAnswers = answersRef.current
+    // 最後一題：立刻顯示 loading overlay 防閃舊題
     setIsSaving(true)
+    const allAnswers = answersRef.current
     try {
       const { visitId, isGoshuinEarned, currentStreak } = await saveVisitAction({
         shrine_id: shrine.id,
@@ -73,14 +100,14 @@ export function VisitClient({
       let resultUrl = `/shrine/${shrine.slug}/visit/result?visitId=${visitId}`
       if (isGoshuinEarned) resultUrl += '&goshuin=1'
       if (currentStreak > 0) resultUrl += `&streak=${currentStreak}`
-      router.push(resultUrl)
+      router.replace(resultUrl)
     } catch (error) {
       console.error('【VisitClient】儲存失敗:', {
         message: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
       })
       const finalCorrect = allAnswers.filter(a => a.is_correct).length
-      router.push(
+      router.replace(
         `/shrine/${shrine.slug}/visit/result?correct=${finalCorrect}&total=${questions.length}&error=save_failed`
       )
     } finally {
@@ -90,6 +117,23 @@ export function VisitClient({
 
   return (
     <main className="flex flex-col items-center min-h-screen pb-24">
+      {/* 5 連勝浮層 */}
+      <AnimatePresence>
+        {showCombo && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: -20 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-x-0 top-24 z-50 flex justify-center pointer-events-none"
+          >
+            <div className="bg-amber-500/90 text-stone-950 font-pixel font-bold text-lg px-6 py-3 rounded-2xl shadow-xl">
+              🔥 5 連勝！
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <nav className="w-full flex items-center justify-between px-4 py-3 border-b border-stone-800 mb-8">
         <button

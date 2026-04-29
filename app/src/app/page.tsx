@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { SignOutButton } from '@/components/auth/sign-out-button'
+import { LanternGrid, type LanternStatus, type LanternItem } from '@/components/shrine/lantern-grid'
+import { Fox } from '@/components/shrine/fox'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,15 +16,6 @@ interface ShrineData {
   name_zh: string
   theme_color: string
   wordCount: number
-}
-
-type LanternStatus = 'new' | 'learning' | 'reviewing' | 'mastered' | 'due'
-
-interface LanternItem {
-  wordId: string
-  lemma: string
-  meaningZh: string
-  status: LanternStatus
 }
 
 interface LanternStats {
@@ -283,9 +275,9 @@ export default async function HomePage() {
   const goalReached = (todayProgress?.wordsStudied ?? 0) >= (todayProgress?.goal ?? 30)
 
   return (
-    <div className="bg-black min-h-screen flex justify-center">
+    <div className="bg-black min-h-[100dvh] flex justify-center">
     <main
-      className="pixel-art relative w-full max-w-[480px] min-h-screen pb-24 flex flex-col"
+      className="pixel-art relative w-full max-w-[480px] min-h-[100dvh] pb-24 flex flex-col"
       style={{
         backgroundImage: "url('/art/inari-bg-home.png')",
         backgroundSize: 'cover',
@@ -314,12 +306,12 @@ export default async function HomePage() {
         </div>
       </nav>
 
-      {/* 主內容 — pt-[28vh] 把 UI 推到背景下半部的霧區 */}
-      <section className="relative z-10 w-full max-w-sm px-4 pt-[28vh] flex flex-col items-center gap-5 mx-auto">
+      {/* 主內容 — pt-[18vh] 把 UI 推到背景中段 */}
+      <section className="relative z-10 w-full max-w-sm px-4 pt-[18vh] flex flex-col items-center gap-4 mx-auto">
         {shrine ? (
           <>
             <h1
-              className="font-pixel text-4xl font-bold tracking-wider"
+              className="font-pixel text-3xl md:text-4xl font-bold tracking-wider"
               style={{
                 color: '#FFE5A0',
                 textShadow: '3px 3px 0 #1C1410, -1px -1px 0 #7E1D14, 1px -1px 0 #7E1D14, -1px 1px 0 #7E1D14, 1px 1px 0 #7E1D14, 0 0 12px rgba(0,0,0,0.9)',
@@ -334,16 +326,7 @@ export default async function HomePage() {
             />
 
             {/* 狐狸 stage 1 */}
-            <div className="cursor-pointer" title="點擊和狐狸互動">
-              <Image
-                src="/art/fox-stage-1.png"
-                width={140}
-                height={140}
-                alt="狐狸"
-                className="pixel-art fox-breathing"
-                unoptimized
-              />
-            </div>
+            <Fox state="idle" />
 
             {/* 今日進度 */}
             <div className="w-full space-y-1.5">
@@ -436,60 +419,6 @@ export default async function HomePage() {
         ))}
       </nav>
     </main>
-    </div>
-  )
-}
-
-// ─── 燈籠格元件 ──────────────────────────────────────────────────────────────
-
-const LANTERN_CFG: Record<
-  LanternStatus,
-  { glyph: string; opacity: number; glow: boolean; label: string }
-> = {
-  mastered:  { glyph: '🏮', opacity: 1.0,  glow: true,  label: '精通' },
-  reviewing: { glyph: '🏮', opacity: 0.85, glow: false, label: '複習中' },
-  learning:  { glyph: '🏮', opacity: 0.60, glow: false, label: '學習中' },
-  due:       { glyph: '🌑', opacity: 0.75, glow: false, label: '待複習' },
-  new:       { glyph: '⚫', opacity: 0.35, glow: false, label: '未學習' },
-}
-
-function LanternGrid({
-  items,
-  totalWords,
-}: {
-  items: LanternItem[]
-  totalWords: number
-}) {
-  const display = items.slice(0, 25)
-  const padCount = Math.max(0, Math.min(25, totalWords) - display.length)
-
-  return (
-    <div className="grid grid-cols-5 gap-2">
-      {display.map(item => {
-        const cfg = LANTERN_CFG[item.status]
-        return (
-          <span
-            key={item.wordId}
-            className="text-2xl cursor-default select-none"
-            style={{
-              opacity: cfg.opacity,
-              filter: cfg.glow ? 'drop-shadow(0 0 5px #fbbf24)' : undefined,
-            }}
-            title={item.lemma ? `${item.lemma}（${item.meaningZh}）` : cfg.label}
-          >
-            {cfg.glyph}
-          </span>
-        )
-      })}
-      {Array.from({ length: padCount }).map((_, i) => (
-        <span
-          key={`pad-${i}`}
-          className="text-2xl cursor-default select-none"
-          style={{ opacity: 0.2 }}
-        >
-          ⚫
-        </span>
-      ))}
     </div>
   )
 }

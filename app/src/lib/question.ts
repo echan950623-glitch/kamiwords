@@ -70,6 +70,7 @@ export function generateQuestion(
     }
 
     case 'zh_to_kanji': {
+      const isKanaOnly = word.lemma === word.kana
       const distractors = pickDistractors(
         word.lemma,
         pool.map(w => w.lemma)
@@ -79,13 +80,14 @@ export function generateQuestion(
         word,
         type,
         stimulus: word.meaning_zh,
-        prompt: '漢字是？',
+        prompt: isKanaOnly ? '日文寫法是？' : '漢字是？',
         choices,
         correctIndex,
       }
     }
 
     case 'kanji_to_kana': {
+      const isKanaOnly = word.lemma === word.kana
       const distractors = pickKanaDistractors(
         word.kana,
         pool.map(w => w.kana)
@@ -94,8 +96,8 @@ export function generateQuestion(
       return {
         word,
         type,
-        stimulus: word.lemma,
-        prompt: '假名讀音是？',
+        stimulus: isKanaOnly ? word.meaning_zh : word.lemma,
+        prompt: isKanaOnly ? '中文意思的假名讀音？' : '假名讀音是？',
         choices,
         correctIndex,
       }

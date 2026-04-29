@@ -5,6 +5,74 @@
 
 ---
 
+## 2026-04-29 18:46 — Sprint X.1 完成（mobile UX + gamefulness 全部到位）
+
+### 做了什麼
+
+整個 Sprint 透過 subagent 連跑 9 個 task + 4 個 Cowork Chrome checkpoint 驗證，全程沒中斷往返。
+
+**Task 1 — Mobile viewport 修正**
+- 全頁套 letterbox：外層 `bg-black min-h-screen flex justify-center` + 內層 `max-w-[480px]`
+- 改 `min-h-dvh` 因應 iOS Safari 動態工具列
+- iPhone 13 (390x844) 不再 scroll
+
+**Task 2 — Confetti 系統**
+- 新增 `components/shrine/confetti.tsx`，三段 level：small（30 粒）/ big（100 粒）/ mega（3 波 × 150 粒，0/200/400ms 錯開）
+- 動態 import `canvas-confetti`（first-load JS 多 471B，可接受）
+
+**Task 3 — Lantern animation**
+- `lantern-grid.tsx` 改 client component，框架 motion stagger 0.1s/盞
+- 燈籠依 mastered 順序逐盞點亮，視覺有節奏
+
+**Task 4 — Fox expression**
+- `components/shrine/fox.tsx` 支援 idle / happy / sad / thinking 四態，每 4s 自動眨眼
+- pixel art 透明 PNG 用 `image-rendering: pixelated`
+
+**Task 5 — SFX 系統**
+- 4 支 CC0 mp3（Mixkit）：correct / wrong / combo / stamp
+- `lib/sfx.ts` 加 200ms throttle（修掉「快點 3 下會重疊」的 bug）
+
+**Task 6 — Combo / 5 連勝**
+- `visit-client.tsx` 加 `comboCount` state，每 5 連對：play('combo') + celebrate('big') + 浮層 banner 2s
+- combo 在答錯時歸零
+
+**Task 7 — Auto-advance + 題型修正**
+- 答對：1.5s setTimeout 自動跳下一題；按鈕保留可手動 skip
+- 答錯：手動 next（給 user 看清正解）
+- 修 kanji_to_kana 假名單字（lemma === kana）bug：stimulus 改用 meaning_zh，prompt 改「中文意思的假名讀音？」
+- 修 zh_to_kanji prompt 改「日文寫法是？」（原本「漢字是？」對假名單字會錯）
+
+**Task 8 — Q10 transition + result mega confetti**
+- `visit-client.tsx` 在 `isLast` 時 `setIsSaving(true)` → `await saveVisitAction` → `router.replace`，不再閃舊 Q10
+- 新增 `result/result-confetti.tsx` client wrapper，accuracy ≥ 80% 或得御朱印 → useEffect fire `celebrate('mega')`
+
+**Task 9 — Demo SQL scripts**
+- `supabase/scripts/demo-master-inari.sql`：99 字 mastered + 1 字 reviewing/到期 → 答對下一題即觸發完成神社儀式
+- `supabase/scripts/demo-reset-inari.sql`：清空 user_lanterns / visits / user_goshuin，狐狸退回 stage 1
+
+### 4 個 Checkpoint 驗證（Cowork Chrome）
+
+- **CP1** ✅ Mobile viewport 390x844 fits without scroll，letterbox 黑邊出現
+- **CP2** ✅ Lantern stagger 動畫可見（兩張間隔 2s 的 screenshot 比對）
+- **CP3** ✅ SFX correct/wrong 觸發、small confetti 飛揚
+- **CP3.5** ✅ Auto-advance 1.5s + 倒數提示、SFX 200ms throttle 生效、5-streak combo banner 跟 combo.mp3 同時觸發
+- **CP4** ✅ Q10 答完 → 5連勝 banner（Q10 = 第二次 5-streak）→ ⛩ spinner（不閃舊題）→ result page mega confetti 三波
+
+### 卡在哪 / 待決定
+
+- **Dev server 容易在頻繁 hot reload 後丟 503 layout.css**（Tailwind v4 PostCSS race condition）：每次寫完 1-2 task 都需要重啟 dev server。Production build 是靜態 CSS 不會遇到，所以不修。
+- **Background tab JS timer throttling**：Chrome 把不可見 tab 的 setTimeout 大幅延後（5s+ 才 fire 1.5s timer）。real user 在前景無此問題，純 testing artifact。
+- **`pickDistractors` 出現「一」這種太短的 distractor**：Q9 的 燙（觸感）→ 熱い 選項裡有「一」很奇怪。下次 sprint 改 same POS + similar Chinese length 過濾。
+
+### 下次開工先做
+
+1. **Sprint X.2 — 完成神社儀式動畫**（用 demo-master-inari.sql + 跑 1 題就能 demo）：御朱印章蓋下動畫 + 狐狸 stage +1 進化展示 + mega 撒花 + sound stamp
+2. **Sprint X.3 — 神籤每日抽 + 招財貓功能化**（首頁進場彩蛋 + 結算頁 60% 抽神籤）
+3. 改善 `pickDistractors`：same POS + similar 中文長度，去除「一」這種短 distractor
+4. 補產 fox-stage-2/3.png（用 Gemini）
+
+---
+
 ## 2026-04-29 00:16 — 階段 8.1.2：結算頁 letterbox + banner 覆蓋字修正
 
 ### 做了什麼
