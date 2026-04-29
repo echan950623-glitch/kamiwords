@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateSessionQuestions } from '@/lib/question'
 import type { QuizWord } from '@/lib/question'
 import { VisitClient } from './visit-client'
+import { isShrineUnlocked } from '@/lib/shrines'
 
 const SESSION_SIZE = 10
 const MAX_REVIEW = 5
@@ -19,6 +20,18 @@ export default async function VisitPage({
     } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
+
+    // Unlock gate：沒解鎖直接踢回 /shrines
+    const { unlocked, blockedBy } = await isShrineUnlocked(params.slug, user.id)
+    if (!unlocked) {
+      console.warn('【VisitPage】shrine 未解鎖:', {
+        slug: params.slug,
+        blockedBy,
+        user_id: user.id,
+        timestamp: new Date().toISOString(),
+      })
+      redirect('/shrines')
+    }
 
     // 抓神社
     const shrineResult = await supabase

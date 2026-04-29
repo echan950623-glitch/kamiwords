@@ -5,6 +5,54 @@
 
 ---
 
+## 2026-04-30 01:03 — Sprint X.4 完成（shrine 解鎖 gate / schema-driven）
+
+### 做了什麼
+
+**還 architectural debt — `unlock_condition` JSONB 終於接到 UI**
+
+002 seed 從第一天就埋了 unlock chain（meiji 解鎖需 inari completed、yasaka 需 meiji、...10 座連續），但 UI 沒讀。schema 跟 UI 不一致 = drift，不修會在 N4-N1 補字源時越積越多。Sprint X.4 一次性還清。
+
+**4 個 task（CC subagent 跑）**
+
+- **Task 1 — `lib/shrines.ts`**：`getShrinesWithUnlockStatus(userId)` 抓全部 10 座 + 各自 unlock state（讀 user_goshuin 表判 completed），`isShrineUnlocked(slug, userId)` 給 server gate 用。inari（level_order=1）永遠 unlocked，其他依 `unlock_condition.type === 'previous_completed'` chain。
+- **Task 2 — `/shrines` 神社一覽頁**：10 張卡片，三態 unlocked/locked/inactive：
+  - 解鎖：彩色邊條 + ⛩ icon + Link 可點
+  - 鎖住：🔒 + 「完成 [前一座 name_jp]」hint + 不可點
+  - 即將開放（word_count=0，N4-N1）：「即將開放」+ 不可點
+  - completed 額外加「✓ 已完成」標籤
+- **Task 3 — 首頁底 nav 神社按鈕**：原本 disable 的 `<button>` 改 `<Link href="/shrines">`，挑戰/御守袋/我的還是 disable + opacity 50。
+- **Task 4 — visit page server-side gate**：`/shrine/[slug]/visit` 在 user check 後加 `isShrineUnlocked` check，未解鎖 console.warn + redirect('/shrines')。
+
+**Cowork demo 驗證（Task 5）**
+
+跑完整 flow：`demo-reset` → /shrines 看 meiji 🔒 → URL 直訪 /shrine/meiji/visit 被擋 → demo-master + 答最後 1 題 → 拿御朱印 → /shrines 看 meiji 變 ⛩ 解鎖 + inari 「✓ 已完成」 → URL 直訪 /shrine/meiji/visit 正常進入答題。
+
+### 卡在哪 / 待決定
+
+- **redirect 終點 bug（minor）**：visit page server-side `redirect('/shrines')` 從未解鎖路徑被觸發時，瀏覽器最終停在 `/`（首頁）而非 `/shrines`。可能是 Next.js 14 dev mode redirect chain quirk（or middleware interaction）。Gate 行為正確（朋友確實進不去 meiji），只是落地頁不對。Cowork prod build 還沒驗，可能 prod 行為不同。優先低，下個 sprint 再追。
+- **/shrines 視覺**：純黑底 + 卡片列表，沒首頁那種背景圖氣氛。MVP OK，後期可加。
+
+### 下次開工先做
+
+1. **追那個 redirect bug**：去 production 環境驗一下，prod build redirect chain 跟 dev mode 行為可能不同。如果 prod 也是同 bug，看 Next.js 14.2.35 是否有相關 issue。簡單 workaround 是改用 `notFound()` + custom 404 page。
+2. **Sprint X.3 — 神籤每日抽 + 招財貓**（X.4 完成後 X.5 順理成章）。
+3. 補圖 fox-stage-2/3/9 + goshuin-stamp（Gemini）。
+
+### Pattern：Sprint 後 dev server 必須重啟
+
+連續 3 個 sprint（X.1 / X.2 / X.4）都遇到同一 webpack error：`Cannot find module './682.js'`。每次大規模新增 client/server component 後，dev server 的 .next 快取跟新檔案 race condition。SOP：
+
+```powershell
+Get-Process node | Stop-Process -Force
+Remove-Item -Recurse -Force .next
+pnpm dev
+```
+
+下個 sprint plan Task 0 寫進去。production build 不會遇到，所以不修治本。
+
+---
+
 ## 2026-04-30 00:31 — N5 字源 pipeline 完整（684 字全到位）
 
 ### 做了什麼

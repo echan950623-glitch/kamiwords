@@ -404,19 +404,29 @@ export default async function HomePage() {
       {/* Bottom tab */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-20 flex items-center justify-around px-4 py-3 bg-stone-900/95 border-t border-stone-800 backdrop-blur-sm">
         {[
-          { icon: '⛩', label: '神社' },
-          { icon: '⚔️', label: '挑戰' },
-          { icon: '🎎', label: '御守袋' },
-          { icon: '👤', label: '我的' },
-        ].map(({ icon, label }) => (
-          <button
-            key={label}
-            className="flex flex-col items-center gap-1 font-pixel text-xs text-stone-400 hover:text-stone-100 transition-colors"
-          >
-            <span className="text-xl">{icon}</span>
-            <span>{label}</span>
-          </button>
-        ))}
+          { icon: '⛩', label: '神社', href: '/shrines' },
+          { icon: '⚔️', label: '挑戰', href: null },
+          { icon: '🎎', label: '御守袋', href: null },
+          { icon: '👤', label: '我的', href: null },
+        ].map(({ icon, label, href }) => {
+          const inner = (
+            <>
+              <span className="text-xl">{icon}</span>
+              <span>{label}</span>
+            </>
+          )
+          const cls =
+            'flex flex-col items-center gap-1 font-pixel text-xs text-stone-400 hover:text-stone-100 transition-colors'
+          return href ? (
+            <Link key={label} href={href} className={cls}>
+              {inner}
+            </Link>
+          ) : (
+            <button key={label} className={cls + ' opacity-50 cursor-not-allowed'} disabled>
+              {inner}
+            </button>
+          )
+        })}
       </nav>
     </main>
     </div>
