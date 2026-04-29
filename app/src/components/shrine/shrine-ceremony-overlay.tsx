@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { celebrate } from '@/components/shrine/confetti'
 import { play } from '@/lib/sfx'
@@ -64,8 +65,16 @@ export function ShrineCeremonyOverlay({ shrineName, newFoxStage, onComplete }: P
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             className="relative mb-8"
           >
-            <div className="w-32 h-32 flex items-center justify-center bg-red-900/30 rounded-lg border-4 border-red-600/60 shadow-2xl">
-              <span className="text-6xl">📜</span>
+            <div className="w-40 h-40 flex items-center justify-center drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+              <Image
+                src="/art/goshuin-stamp.png"
+                width={160}
+                height={160}
+                alt="御朱印"
+                className="pixel-art"
+                unoptimized
+                priority
+              />
             </div>
             <p className="font-pixel text-amber-400 text-center mt-3 font-bold">獲得御朱印</p>
           </motion.div>
@@ -82,7 +91,17 @@ export function ShrineCeremonyOverlay({ shrineName, newFoxStage, onComplete }: P
             transition={{ duration: 0.5 }}
             className="flex flex-col items-center gap-2"
           >
-            <span className="text-7xl">🦊</span>
+            <div className="w-32 h-32 flex items-center justify-center drop-shadow-[0_0_24px_rgba(251,191,36,0.6)]">
+              <Image
+                src={`/art/fox-stage-${newFoxStage}.png`}
+                width={128}
+                height={128}
+                alt={`狐狸 Stage ${newFoxStage}`}
+                className="pixel-art"
+                unoptimized
+                priority
+              />
+            </div>
             <p className="font-pixel text-stone-300 text-sm">狐狸進化 → Stage {newFoxStage}</p>
           </motion.div>
         )}
