@@ -5,6 +5,62 @@
 
 ---
 
+## 2026-04-30 00:31 — N5 字源 pipeline 完整（684 字全到位）
+
+### 做了什麼
+
+**Cowork 直翻 584 字，不走 Anthropic API**
+
+原本 `scripts/import-n5.py` 設計是用 ANTHROPIC_API_KEY 呼叫 Claude API 批次翻譯。但 XunC 提醒：「Cowork 本身就是 Claude，幹嘛還呼叫 API？」一語驚醒夢中人。改 spawn 一個 general-purpose agent 直翻 584 字（agent 就是 Claude、本身能翻），產 2 個 SQL migration 檔。
+
+**資料來源 + 拆分策略**
+
+- 字源：`stephenmk/yomitan-jlpt-vocab` master/n5.csv（684 字，CC-BY 授權）
+- 既有：`003_n5_words_inari.sql` 已寫死前 100 字（あ-お 開頭）
+- 新增 part 2：`004_n5_words_inari_part2.sql` 242 字（CSV 行 102-343）
+- 新增 meiji：`005_n5_words_meiji.sql` 342 字（CSV 行 344-685）
+- 神社分配：N5-basic = inari 342 字 / N5-adv = meiji 342 字（schema 原本就這樣設計）
+
+**輔助腳本 `scripts/gen_n5_migrations.py`**
+
+agent 寫的 Python 腳本，含 584 條 (jmdict_seq, kana, kanji) → meaning_zh 翻譯字典。以後若要重產 SQL（例如改翻譯）可直接重跑。
+
+**翻譯品質約定**
+
+- 學生友善口語、不用辭典體（「步行」→「走路」、「敘述」→「說」）
+- 同音異義用括號註明（「あつい 三個」→「燙（觸感）/熱（天氣）/厚的」）
+- 同義異音用括號標讀法（「四（し）/四（よん）」、「七（しち）/七（なな）」）
+- 量詞語助詞用台灣常用詞（不用大陸詞）
+
+agent 自評 8.5/10。難翻的點（さあ vs では vs それでは 都翻「那麼」系列）已用括號或語感區分。
+
+**套用到 Supabase**
+
+用 Supabase MCP `execute_sql` 直接套兩個 migration（不需 user 進 Dashboard 手動跑）。
+
+最終 DB 狀態：
+- inari 342 字（N5-basic）
+- meiji 342 字（N5-adv）
+- 其餘 8 神社 0 字（N4-N1 未來再補）
+
+### 卡在哪 / 待決定
+
+- **shrine 解鎖條件**：002_seed_shrines.sql 設定 meiji 的 unlock_condition = `{"type":"previous_completed","shrine":"inari"}`，但首頁/挑戰頁目前還沒實作這個 gate 邏輯（顯示哪些神社可進、哪些鎖著）。**朋友試玩前要補**，否則 inari 還沒掃完就能進 meiji，破壞循序漸進的設計。
+- **N4 字何時匯入**：N4 約 580 字，要拆 yasaka + heian。技術 pipeline 已備（同 import-n5.py，改 csv URL），但翻譯量大，等 N5 朋友試玩 feedback 跑完再說。
+
+### 下次開工先做
+
+1. **shrine 解鎖 gate**：`shrines` 列表頁加 `unlock_condition` 檢查 → 沒解鎖的神社灰階 + 鎖頭 icon + tooltip「完成 [前一座] 才能進」
+2. **Sprint X.3 — 神籤每日抽 + 招財貓功能化**（用戶解鎖 meiji 之前先有變化感）
+3. 補圖 fox-stage-2/3/9 + goshuin-stamp（Gemini）
+
+### 特殊處理 / 觀察
+
+- agent 翻 584 字時，「ぬるい」原本翻成「溫（不夠熱）」，但全形括號在 SQL 內無轉義問題。004 vs 005 SQL 寫法都正確。
+- inari part 1（003）的 position 用 `row_number() over (order by lemma)` = 1-100，part 2（004）用 `100 + row_number(...)` = 101-342，連號正確。
+
+---
+
 ## 2026-04-29 23:56 — Sprint X.2 完成（神社儀式動畫 + pickDistractors 改善）
 
 ### 做了什麼

@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-04-29 23:56 — Sprint X.2 完成（神社儀式動畫 + pickDistractors，Cowork Chrome demo 全過關）
+**最後更新**：2026-04-30 00:31 — N5 字源 pipeline 完成（inari 342 + meiji 342 = 684 字全套上 Supabase）
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -26,16 +26,17 @@
 - ✅ 階段 8.1：Pixel Art 視覺整合 — Zpix 字體、.pixel-art class、fox-breathing、首頁神社背景圖、結算頁 banner
 - ✅ **Sprint X.1（mobile UX + gamefulness）**：letterbox max-w-[480px]、min-h-dvh、confetti 三段（small/big/mega）、SFX 4 支（correct/wrong/combo/stamp）+ 200ms throttle、lantern stagger 動畫、fox 4 態表情、5-streak combo banner、auto-advance 1.5s、kanji_to_kana 假名單字 bug fix、Q10 transition no-flash、result page mega confetti（≥80% 或御朱印觸發）、demo-master/reset SQL scripts
 - ✅ **Sprint X.2（神社儀式動畫 + pickDistractors）**：`<ShrineCeremonyOverlay>` 5-phase（神社圓滿 → 御朱印章 spring drop + stamp.mp3 → 狐狸進化 → mega 撒花 → 點擊繼續）、`<ResultCeremonyWrapper>` client wrapper、newFoxStage 從 saveVisitAction 接力到 query string、pickDistractors 加同字長過濾（過濾「一」這種太短 distractor）、demo SQL 走完整 path 驗證 ceremony 觸發
+- ✅ **N5 字源 pipeline 完整**：scripts/import-n5.py + scripts/gen_n5_migrations.py、Cowork 直翻 584 字（不走 Anthropic API）、004_n5_words_inari_part2.sql（242 字）+ 005_n5_words_meiji.sql（342 字）已套上 Supabase。inari 342 字（N5-basic）+ meiji 342 字（N5-adv）= 684 字全 N5
 
 **進行中**：
-- ⏳ git push Sprint X.2 → Vercel auto-deploy
+- ⏳ git push N5 字源 → Vercel auto-deploy
 
 **待做**：
 - 📋 Sprint X.3：神籤每日抽 + 招財貓功能化（首頁進場彩蛋 + 結算頁 60% 抽神籤）
 - 📋 補產 fox-stage-2/3/9.png + goshuin-stamp.png（用 Gemini）→ 換掉 emoji 占位
 - 📋 階段 9：Streak（已有）+ PWA manifest / service worker 在 production 驗證
-- 📋 階段 10：朋友試玩
-- 📋 後續：supabase gen types 補型別、N5 剩餘 584 字匯入
+- 📋 階段 10：朋友試玩（先解 meiji 神社解鎖條件 — 完成 inari 才開放 meiji，逐 N 級遞進）
+- 📋 後續：supabase gen types 補型別、N4 字源匯入（yasaka + heian 兩座，類似 N5 流程）
 
 **目前卡點 / 待決定**：
 - 域名 kamiwords.com 等正式給朋友試玩前再買
