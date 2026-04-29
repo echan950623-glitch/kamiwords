@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-04-29 18:46 — Sprint X.1 完成（mobile UX + gamefulness + Checkpoint 4 全過關，準備 push 上 Vercel）
+**最後更新**：2026-04-29 23:56 — Sprint X.2 完成（神社儀式動畫 + pickDistractors，Cowork Chrome demo 全過關）
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -25,22 +25,21 @@
 - ✅ 階段 5+6：Bug Fix + 首頁真實燈籠 + 御朱印 + 狐狸進化
 - ✅ 階段 8.1：Pixel Art 視覺整合 — Zpix 字體、.pixel-art class、fox-breathing、首頁神社背景圖、結算頁 banner
 - ✅ **Sprint X.1（mobile UX + gamefulness）**：letterbox max-w-[480px]、min-h-dvh、confetti 三段（small/big/mega）、SFX 4 支（correct/wrong/combo/stamp）+ 200ms throttle、lantern stagger 動畫、fox 4 態表情、5-streak combo banner、auto-advance 1.5s、kanji_to_kana 假名單字 bug fix、Q10 transition no-flash、result page mega confetti（≥80% 或御朱印觸發）、demo-master/reset SQL scripts
+- ✅ **Sprint X.2（神社儀式動畫 + pickDistractors）**：`<ShrineCeremonyOverlay>` 5-phase（神社圓滿 → 御朱印章 spring drop + stamp.mp3 → 狐狸進化 → mega 撒花 → 點擊繼續）、`<ResultCeremonyWrapper>` client wrapper、newFoxStage 從 saveVisitAction 接力到 query string、pickDistractors 加同字長過濾（過濾「一」這種太短 distractor）、demo SQL 走完整 path 驗證 ceremony 觸發
 
 **進行中**：
-- ⏳ git push → Vercel auto-deploy Sprint X.1
+- ⏳ git push Sprint X.2 → Vercel auto-deploy
 
 **待做**：
-- 📋 Sprint X.2：完成神社儀式動畫（御朱印章蓋下 + 狐狸進化 stage+1 + mega 撒花 + stamp.mp3）
 - 📋 Sprint X.3：神籤每日抽 + 招財貓功能化（首頁進場彩蛋 + 結算頁 60% 抽神籤）
-- 📋 改善 `pickDistractors`：same POS + similar 中文長度，過濾掉「一」這種太短 distractor
-- 📋 補產 fox-stage-2/3.png（用 Gemini）
-- 📋 階段 9：Streak（已有）+ PWA manifest / service worker 設定
+- 📋 補產 fox-stage-2/3/9.png + goshuin-stamp.png（用 Gemini）→ 換掉 emoji 占位
+- 📋 階段 9：Streak（已有）+ PWA manifest / service worker 在 production 驗證
 - 📋 階段 10：朋友試玩
 - 📋 後續：supabase gen types 補型別、N5 剩餘 584 字匯入
 
 **目前卡點 / 待決定**：
 - 域名 kamiwords.com 等正式給朋友試玩前再買
-- Dev server CSS 503 race condition 不修（production 不會遇到，每次手動重啟即可）
+- Dev server CSS 503 / webpack chunk 找不到問題（每次大量新增 client component 後需重啟 dev server + 清 .next）— production 不會遇到，不修
 - Background tab JS timer throttling 是 Chrome 行為，real user 前景無此問題
 
 ---

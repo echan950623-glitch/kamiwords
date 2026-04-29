@@ -26,8 +26,19 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function pickDistractors(correct: string, pool: string[], count = 3): string[] {
+  const len = correct.length
   const candidates = pool.filter(s => s !== correct)
-  return shuffle(candidates).slice(0, count)
+  // 優先抽長度相近（±1 字元 或 0.5x ~ 1.5x），避免「一」這種太短的 distractor
+  const near = candidates.filter(s => {
+    const diff = Math.abs(s.length - len)
+    return diff <= 1 || (s.length >= len * 0.5 && s.length <= len * 1.5)
+  })
+  const far = candidates.filter(s => {
+    const diff = Math.abs(s.length - len)
+    return diff > 1 && (s.length < len * 0.5 || s.length > len * 1.5)
+  })
+  const sorted = [...shuffle(near), ...shuffle(far)]
+  return sorted.slice(0, count)
 }
 
 function pickKanaDistractors(correctKana: string, pool: string[], count = 3): string[] {

@@ -90,7 +90,7 @@ export function VisitClient({
     setIsSaving(true)
     const allAnswers = answersRef.current
     try {
-      const { visitId, isGoshuinEarned, currentStreak } = await saveVisitAction({
+      const { visitId, isGoshuinEarned, newFoxStage, currentStreak } = await saveVisitAction({
         shrine_id: shrine.id,
         answers: allAnswers,
         new_words_count: newWordsCount,
@@ -99,6 +99,7 @@ export function VisitClient({
 
       let resultUrl = `/shrine/${shrine.slug}/visit/result?visitId=${visitId}`
       if (isGoshuinEarned) resultUrl += '&goshuin=1'
+      if (newFoxStage !== null) resultUrl += `&foxStage=${newFoxStage}`
       if (currentStreak > 0) resultUrl += `&streak=${currentStreak}`
       router.replace(resultUrl)
     } catch (error) {

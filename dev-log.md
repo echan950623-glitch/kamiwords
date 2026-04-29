@@ -5,6 +5,71 @@
 
 ---
 
+## 2026-04-29 23:56 — Sprint X.2 完成（神社儀式動畫 + pickDistractors 改善）
+
+### 做了什麼
+
+CC 跑 4 個 task，Cowork Chrome 跑 demo 驗證。
+
+**Task 1 — pickDistractors 同字長過濾**
+- `app/src/lib/question.ts` 的 `pickDistractors` 加 length-based 分組
+- 邏輯：±1 字元 OR 0.5x ~ 1.5x 之間算 near，反之 far，先 near 後 far
+- 修掉「燙(觸感) → 熱い」選項裡會出現「一」這種 1-char distractor 的問題
+
+**Task 2 — visit-client 傳 newFoxStage 到 result URL**
+- 解構 `saveVisitAction` 多取出 `newFoxStage`
+- query string 多帶 `&foxStage=2`（或進化後的 stage）
+
+**Task 3 — `<ShrineCeremonyOverlay>` 5-phase 動畫元件**
+- Phase 1（800ms）：神社名「⛩ 圓滿」金色標題從上方淡入
+- Phase 2（1000ms）：御朱印章 emoji `📜` 用 spring 從上方旋轉縮放蓋下，紅印泥框背景 + stamp.mp3
+- Phase 3（1000ms）：狐狸 emoji `🦊` 進化 + 「狐狸進化 → Stage X」副標
+- Phase 4（200ms）：`celebrate('mega')` 三波撒花
+- Phase 5：「點擊任何處繼續 →」提示，`onClick` 才 close
+- timer cleanup 用 useRef，onComplete callback 用 ref 避免 stale closure
+
+**Task 4 — `<ResultCeremonyWrapper>` client wrapper**
+- 為什麼需要 wrapper：`page.tsx` 是 server component，`<ShrineCeremonyOverlay>` 是 client（含 useState / useEffect / onClick），中間需 client wrapper 管理 ceremonyDone state
+- `goshuin=1` 時 `ceremonyDone` 初始為 false，先蓋滿全螢幕的 ceremony，user 點才設 true 顯示一般結算內容
+- `goshuin=1` 不存在時 ceremonyDone 直接為 true，跳過 ceremony
+
+### Cowork Chrome 驗證
+
+跑 `demo-master-inari.sql`（99 mastered + 1 reviewing）→ 進 inari 答最後 1 題：
+
+| 驗證項 | 結果 |
+|---|---|
+| Q10 transition 不閃舊題（⛩ spinner） | ✅ |
+| Result URL 正確帶 `goshuin=1&foxStage=2&streak=1` | ✅ |
+| ShrineCeremonyOverlay 觸發（黑屏蓋滿）| ✅ |
+| Phase 1 神社名「伏見稻荷大社 圓滿」金色淡入 | ✅ |
+| Phase 2 御朱印章 + stamp.mp3 觸發（T0+5.9s） | ✅ |
+| Phase 3 狐狸進化 → Stage 2 | ✅ |
+| Phase 4 mega confetti | ✅（由 phase 5 推測，frame 太快沒抓到）|
+| Phase 5 「點擊任何處繼續 →」 | ✅ |
+| 點擊 → overlay 關閉 → 結算頁正確顯示 | ✅ |
+| 結算頁御朱印獎勵卡 + 100 燈籠 + 連續 1 天 + 1/1 banner | ✅ |
+
+### 卡在哪 / 待決定
+
+- **Dev server webpack chunk 找不到**：CC 完成 Task 4 後第一次跑 visit 出現 `Cannot find module './682.js'`，需要 `Remove-Item .next` + 重啟 dev server。每次大規模新增 client component（這次是 2 個）都會遇到。Production 不會。
+- **fox-stage-2.png / goshuin-stamp.png 還沒換**：CC 用 emoji 占位實作得很有儀式感，不急著換，但 final polish 要補。XunC 已經產出 9 尾狐狸版本（太強，當 stage 9 用），stage 2 中等版要重產。
+
+### 下次開工先做
+
+1. **Sprint X.3 — 神籤每日抽 + 招財貓功能化**
+   - 首頁進場彩蛋（招財貓 idle 動畫 + 點擊互動）
+   - 結算頁 60% 機率抽神籤（大吉/中吉/小吉/凶 + 學習相關籤詩）
+2. **補圖（並行）**：用 Gemini 重產 fox-stage-2（2 尾中等狐）+ goshuin-stamp.png 透明底版本
+3. **N5 剩餘 584 字匯入 pipeline**：跑 yomitan-jlpt-vocab → JMdict → Claude API 翻中文 → CSV → Supabase
+
+### Demo 反 / Tip
+
+- demo-master-inari.sql 跑下去**會洗掉 user 真實 progress**（target_user 只有 echan950623@gmail.com 自己）。驗完務必跑 demo-reset 還原（會清空 user_lanterns / visits / user_goshuin / user_fox）。
+- demo-reset 會把狐狸打回沒進化狀態，下次 demo 才會看到 stage 1 → stage 2 的進化。
+
+---
+
 ## 2026-04-29 18:46 — Sprint X.1 完成（mobile UX + gamefulness 全部到位）
 
 ### 做了什麼
