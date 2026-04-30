@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-04-30 01:03 — Sprint X.4 完成（shrine 解鎖 gate / `unlock_condition` schema-driven，Cowork demo 全過關）
+**最後更新**：2026-05-01 00:07 — Sprint X.5 完成（N4 字源 yasaka 320 + heian 320 = 1324 字 / 4 座神社全到位）+ chibi 風 fox 9 階段 + goshuin-stamp 圖片資產替換
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -28,16 +28,18 @@
 - ✅ **Sprint X.2（神社儀式動畫 + pickDistractors）**：`<ShrineCeremonyOverlay>` 5-phase（神社圓滿 → 御朱印章 spring drop + stamp.mp3 → 狐狸進化 → mega 撒花 → 點擊繼續）、`<ResultCeremonyWrapper>` client wrapper、newFoxStage 從 saveVisitAction 接力到 query string、pickDistractors 加同字長過濾（過濾「一」這種太短 distractor）、demo SQL 走完整 path 驗證 ceremony 觸發
 - ✅ **N5 字源 pipeline 完整**：scripts/import-n5.py + scripts/gen_n5_migrations.py、Cowork 直翻 584 字（不走 Anthropic API）、004_n5_words_inari_part2.sql（242 字）+ 005_n5_words_meiji.sql（342 字）已套上 Supabase。inari 342 字（N5-basic）+ meiji 342 字（N5-adv）= 684 字全 N5
 - ✅ **Sprint X.4 — shrine 解鎖 gate**：`lib/shrines.ts`（`getShrinesWithUnlockStatus` + `isShrineUnlocked`）讀 `unlock_condition` JSONB schema、`/shrines` 神社一覽頁（10 座，三態 unlocked/locked/inactive）、首頁底 nav「神社」連到 `/shrines`、`/shrine/[slug]/visit` server-side gate 防 URL 直訪、Cowork demo 走「reset → meiji 鎖 → 完成 inari → meiji 解鎖」全流程驗過。**未來補 N4-N1 字直接 schema-driven 自動套用，不用改 UI 邏輯**
+- ✅ **Chibi 圖片資產替換**：`fox-sheet.png` Gemini 一次產 9 階段 sprite sheet → ImageMagick 沙箱裁成 `fox-stage-{1..9}.png`、chibi 風 `goshuin-stamp.png`（神 字紅印章 + 4 角 chibi 鳥居/狐臉）、`<ShrineCeremonyOverlay>` 的 📜/🦊 emoji 全改 `<Image>` + drop-shadow glow。舊寫實風保留 `.realistic.bak.png` 備份
+- ✅ **Sprint X.5 — N4 字源匯入**：scripts/gen_n4_migrations.py、Cowork agent 直翻 640 N4 字（不走 Anthropic API）、006_n4_words_yasaka.sql（320 字）+ 007_n4_words_heian.sql（320 字）已套上 Supabase。yasaka 320 字（N4-basic）+ heian 320 字（N4-adv）= 640 字全 N4。**N5 + N4 共 1324 字 / 4 座神社**
 
 **進行中**：
-- ⏳ git push Sprint X.4 → Vercel auto-deploy
+- ⏳ git push Sprint X.5 + 圖片資產 → Vercel auto-deploy
 
 **待做**：
 - 📋 Sprint X.3：神籤每日抽 + 招財貓功能化（首頁進場彩蛋 + 結算頁 60% 抽神籤）
-- 📋 補產 fox-stage-2/3/9.png + goshuin-stamp.png（用 Gemini）→ 換掉 emoji 占位
+- 📋 Fox 元件 stage prop（page.tsx 抓 user_fox.stage 傳給 Fox component，首頁顯示用戶當前 evolved 狐狸而非永遠 stage 1）
 - 📋 階段 9：PWA manifest / service worker 在 production 驗證
 - 📋 階段 10：朋友試玩
-- 📋 後續：supabase gen types 補型別、N4 字源匯入（yasaka + heian 兩座，類似 N5 流程）
+- 📋 後續：supabase gen types 補型別、N3-N1 字源匯入（同 N5/N4 流程，schema 已支援）
 
 **已知 minor bug（可下個 sprint 修）**：
 - visit page server-side `redirect('/shrines')` 從未解鎖路徑被觸發時，瀏覽器最終停在 `/`（首頁）而非 `/shrines`。可能是 Next.js 14 dev mode redirect chain quirk。Gate 行為正確（朋友進不去 meiji），只是落地頁不對。優先低。

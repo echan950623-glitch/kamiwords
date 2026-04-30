@@ -5,6 +5,79 @@
 
 ---
 
+## 2026-05-01 00:07 — Sprint X.5：N4 字源 + chibi 圖片資產 + ShrineCeremonyOverlay Image 替換
+
+### 做了什麼
+
+連跑兩件事：圖片資產 polish + N4 字匯入。
+
+**Chibi 圖片資產替換**
+
+之前 fox-stage 是寫實風（fox-stage-1 大隻寫實狐），跟 KamiWords 學習 app 的可愛調性不太合。Gemini 一次產 9 階段 chibi sprite sheet（`fox-sheet.png`，2048×2048），用沙箱 ImageMagick `convert -crop 3x3@` 自動裁成 9 個獨立 PNG，重命名為 `fox-stage-{1..9}.png`。每張約 341×682，透明底，pixel edge crisp。
+
+進化梯度設計：
+- Stage 1：米白小寶寶 1 尾
+- Stage 2：淺橘 1-2 尾蓬鬆
+- Stage 3：飽和橘 2 尾
+- Stage 4：額頭白星 3 尾
+- Stage 5：橘金漸層 5 尾
+- Stage 6：淺金光暈 5 尾
+- Stage 7：深金強光暈 7 尾
+- Stage 8：亮金大光環
+- Stage 9：純奶金 + 圓形光環，9 尾神格化
+
+`goshuin-stamp.png` 同步替換為 chibi 風（簡單「神」字 + 4 角 chibi 鳥居/狐臉，扁平紅 而非寫實 ink-bleed），跟 fox 視覺一致。寫實版保留 `.realistic.bak.png` 備份。
+
+`<ShrineCeremonyOverlay>` 的 emoji 替換：
+- `📜` → `<Image src="/art/goshuin-stamp.png">` + `drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]` 紅色 glow
+- `🦊` → `<Image src={\`/art/fox-stage-${newFoxStage}.png\`}>` + amber glow
+
+**Sprint X.5 — N4 字源匯入**
+
+跟 N5 同流程：spawn Cowork general-purpose agent 直翻 640 N4 字（不走 Anthropic API），產 2 個 SQL migration，用 Supabase MCP `execute_sql` 直接套到 production database。
+
+- `006_n4_words_yasaka.sql`（320 字，CSV 行 2-321）→ N4-basic
+- `007_n4_words_heian.sql`（320 字，CSV 行 322-641）→ N4-adv
+- `scripts/gen_n4_migrations.py`（agent 寫的 helper，內含 640 條翻譯字典 + sanity check）
+
+Agent 自評翻譯品質 8/10。難翻處理：
+- **自他動詞配對**用「（自動）/（他動）」標：集まる/集める、変える/変わる、決まる/決める、続く/続ける、壊す/壊れる、見つかる/見つける、立てる/建てる、止める/止む 等
+- **同 kana 不同 kanji**：たずねる 訪ねる→拜訪、尋ねる→詢問；なくなる 無くなる→不見、亡くなる→過世；なおる 直る→修好、治る→痊癒
+- **謙讓/敬語動詞**標「（敬語）/（謙讓）」：いらっしゃる、おっしゃる、いたす、いただく、なさる、申し上げる、参る、ご存じ、御覧になる、召し上がる、拝見、差し上げる
+- **副詞含後接限制**：けっして→絕對（後接否定）、ぜんぜん→完全（後接否定）、ちっとも→一點也不（後接否定）、なかなか→相當/遲遲（後接否定）
+
+Schema-driven gate 自動串：完成 meiji（N5-adv） → 解鎖 yasaka（N4-basic） → 完成 yasaka → 解鎖 heian（N4-adv）。**沒改任何 UI 邏輯**，這就是 X.4 投資的回報。
+
+### DB 狀態
+
+| Shrine | Level | 字數 |
+|---|---|---|
+| inari | N5-basic | 342 |
+| meiji | N5-adv | 342 |
+| **yasaka** | **N4-basic** | **320** |
+| **heian** | **N4-adv** | **320** |
+| itsukushima | N3-basic | 0 |
+| izumo | N3-adv | 0 |
+| kasuga | N2-basic | 0 |
+| tsurugaoka | N2-adv | 0 |
+| nikko | N1-basic | 0 |
+| ise | N1-adv | 0 |
+
+**Total: 1324 字 / 4 座可玩神社**
+
+### 卡在哪 / 待決定
+
+- **Fox 元件還是 hardcode stage 1**：`<Fox state="idle" />` 寫死讀 fox-stage-1.png。理想要 page.tsx 抓 user_fox.stage 傳給 Fox component，朋友看到自己的 evolved 狐狸。**列入下個 sprint nice-to-have**。
+- **N3-N1 字源**：技術 pipeline 完備（同 import-n5/n4 流程），等朋友試玩 feedback 跑完再說。N1 約 3500+ 字，量大需多輪 agent。
+
+### 下次開工先做
+
+1. **Fox stage prop**（半小時）：page.tsx 補抓 user_fox.stage，Fox component 加 stage prop，首頁顯示真實 evolved 狐狸。
+2. **Sprint X.3 — 神籤 + 招財貓**（差異化亮點）。
+3. **PWA manifest production 驗證**（朋友試玩前必補）。
+
+---
+
 ## 2026-04-30 01:03 — Sprint X.4 完成（shrine 解鎖 gate / schema-driven）
 
 ### 做了什麼
