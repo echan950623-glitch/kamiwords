@@ -250,6 +250,37 @@ async function getUserStreak(userId: string): Promise<StreakData> {
   }
 }
 
+/**
+ * 抓 user_fox.stage（沒 row 預設 1，等第一次完成神社才 insert）
+ */
+async function getUserFoxStage(userId: string): Promise<number> {
+  try {
+    const supabase = await createClient()
+
+    const result = await supabase
+      .from('user_fox')
+      .select('stage')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (result.error) {
+      console.error('【首頁-Fox】抓 user_fox 失敗:', {
+        message: result.error.message,
+        timestamp: new Date().toISOString(),
+      })
+      return 1
+    }
+
+    return (result.data?.stage as number | undefined) ?? 1
+  } catch (error) {
+    console.error('【首頁-Fox】未預期錯誤:', {
+      message: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString(),
+    })
+    return 1
+  }
+}
+
 // ─── 頁面主體 ─────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
@@ -262,13 +293,14 @@ export default async function HomePage() {
 
   const shrine = await getInariShrine()
 
-  const [lanternStats, todayProgress, streak] = shrine
+  const [lanternStats, todayProgress, streak, foxStage] = shrine
     ? await Promise.all([
         getLanternStats(shrine.id, user.id),
         getTodayProgress(user.id),
         getUserStreak(user.id),
+        getUserFoxStage(user.id),
       ])
-    : [null, null, null]
+    : [null, null, null, 1]
 
   const userEmail = user.email ?? ''
   const displayName = user.user_metadata?.full_name ?? userEmail.split('@')[0]
@@ -325,8 +357,8 @@ export default async function HomePage() {
               totalWords={shrine.wordCount}
             />
 
-            {/* 狐狸 stage 1 */}
-            <Fox state="idle" />
+            {/* 狐狸：依 user_fox.stage 動態載入（預設 1） */}
+            <Fox state="idle" stage={foxStage ?? 1} />
 
             {/* 今日進度 */}
             <div className="w-full space-y-1.5">

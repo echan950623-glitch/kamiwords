@@ -5,6 +5,51 @@
 
 ---
 
+## 2026-05-01 00:16 — Fox 元件 stage prop（首頁動態載 evolved 狐狸）
+
+### 做了什麼
+
+Sprint X.5 的 nice-to-have follow-up，半小時做完。
+
+**Fox component 加 stage prop**
+
+`components/shrine/fox.tsx` 從硬寫 `/art/fox-stage-1.png` 改成 `/art/fox-stage-${safeStage}.png`，新增 `stage?: number` prop（預設 1，clamp 到 1-9 區間防 DB 不可預期值）。
+
+進化視覺強化：
+- **體型遞增**：stage 1 = 96px、stage 9 = 144px（每階 +6px）
+- **stage ≥ 5 金光 drop-shadow**：`drop-shadow(0 0 10px rgba(251,191,36,0.35))`
+- **stage ≥ 7 強光暈**：`drop-shadow(0 0 16px rgba(251,191,36,0.6))`
+- title attribute 帶 stage 資訊（hover 看得到）
+
+**page.tsx 抓 user_fox.stage**
+
+新增 `getUserFoxStage(userId)` server-side helper：用 `.maybeSingle()` 而非 `.single()`，沒 row 預設 1（user_fox 是 lazy insert，第一次完成神社才寫入）。
+
+加進首頁 Promise.all 平行 fetch（跟 lanternStats / todayProgress / streak 同層）。`<Fox state="idle" stage={foxStage ?? 1} />`。
+
+### 用戶體驗變化
+
+- 新用戶（沒拿御朱印）：看到米白小寶寶 stage 1，跟以前一樣
+- 拿過 1 個御朱印：首頁狐狸變 stage 2（淺橘 1-2 尾蓬鬆）+ 略大一點點
+- 拿過 5 個御朱印：stage 6（淺金光暈）+ 96+30=126px
+- 拿過 8 個御朱印：stage 9（純奶金 + 圓形光環）+ 144px + 強金光 drop-shadow
+
+每次完成神社進化會顯眼到首頁，配合 ShrineCeremonyOverlay 的進化動畫，user 有「我的狐狸長大了」的養成感。
+
+### 卡在哪 / 待決定
+
+無。直接 ship。
+
+### 下次開工先做
+
+1. **PWA manifest production 驗證**（朋友試玩 hard blocker，1-2 小時）
+2. **Sprint X.3 神籤 + 招財貓**（差異化亮點）
+3. **域名 kamiwords.com**（買 + Vercel DNS）
+
+朋友試玩 critical path：PWA + 域名 → 朋友試玩 → 收 feedback → Sprint X.3。
+
+---
+
 ## 2026-05-01 00:07 — Sprint X.5：N4 字源 + chibi 圖片資產 + ShrineCeremonyOverlay Image 替換
 
 ### 做了什麼

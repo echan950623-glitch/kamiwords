@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-01 00:07 — Sprint X.5 完成（N4 字源 yasaka 320 + heian 320 = 1324 字 / 4 座神社全到位）+ chibi 風 fox 9 階段 + goshuin-stamp 圖片資產替換
+**最後更新**：2026-05-01 00:16 — Fox 元件 stage prop polish（首頁顯示 user 真實 evolved 狐狸 stage 1-9，stage≥5 加金光、stage≥7 強光暈）
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -36,9 +36,9 @@
 
 **待做**：
 - 📋 Sprint X.3：神籤每日抽 + 招財貓功能化（首頁進場彩蛋 + 結算頁 60% 抽神籤）
-- 📋 Fox 元件 stage prop（page.tsx 抓 user_fox.stage 傳給 Fox component，首頁顯示用戶當前 evolved 狐狸而非永遠 stage 1）
 - 📋 階段 9：PWA manifest / service worker 在 production 驗證
 - 📋 階段 10：朋友試玩
+- 📋 域名 kamiwords.com 購買 + Vercel DNS
 - 📋 後續：supabase gen types 補型別、N3-N1 字源匯入（同 N5/N4 流程，schema 已支援）
 
 **已知 minor bug（可下個 sprint 修）**：
