@@ -5,6 +5,65 @@
 
 ---
 
+## 2026-05-02 16:15 — GPT 重產 chibi 圖 + chroma-key 一鍵去綠
+
+### 做了什麼
+
+之前 Gemini 那批圖即使 fuzz transparent 過了灰白格紋，邊緣還是坑坑巴巴（chess tile 跟狐毛橘色色相相近，fuzz 寬會誤殺、窄會留 fringe）。XunC 提議用「亮綠色背景」chroma key 重產。
+
+XunC 用 GPT image gen 跑兩張新圖：
+- `fox-sheet-green.png`（1254×1254，9 階段 chibi 狐 sprite sheet，#00FF00 綠底）
+- `goshuin-green.png`（1254×1254，神 字紅印章 + 4 角狐臉/鳥居，#00FF00 綠底）
+
+實際綠值 sample 出來是 srgb(15-30, 240-248, 4-20) ≈ #14F40C（GPT 沒給 pure #00FF00 但夠純）。
+
+ImageMagick 雙 pass：
+
+```bash
+convert fox-sheet-green.png \
+  -fuzz 30% -transparent "#00FF00" \
+  -fuzz 25% -transparent "#14F40C" \
+  fox-sheet-clean.png
+
+convert fox-sheet-clean.png -crop 3x3@ +repage +adjoin "fox-cell-%d.png"
+
+# 覆蓋 fox-stage-{1..9}.png
+for i in 0..8: cp fox-cell-$i.png fox-stage-$((i+1)).png
+```
+
+goshuin 同樣處理，直接覆蓋 `goshuin-stamp.png`。
+
+### 結果
+
+- **stage 1-8 邊緣完全乾淨**，無 fringe，pixel art 邊緣銳利
+- **stage 9 周圍 aura 有少量殘綠 fringe**（aura 設計成黃綠光暈，跟 chroma key 衝突，fuzz 必須吃到一些 aura）— 接受，user 一般要 9 個神社全完成才看到
+- **goshuin 印章紅色純淨**，邊框 / 字 / 4 角貓臉鳥居都完整
+
+### 教訓
+
+**chroma key (#00FF00 綠底) 比 transparency-indicator (灰白格紋) 適合 AI 生成圖**：色相距離大 → fuzz 可開大 → 邊緣可精準切。但要小心 aura / glow effects 含黃綠成分會被 over-suppress。
+
+下次 SOP：給 AI image gen prompt 一定要「solid bright pure green #00FF00 background covering ENTIRE canvas」，不要「transparent background」（AI 會擅自畫格紋）。
+
+### 檔案結構
+
+```
+app/public/art/
+├── fox-stage-{1..9}.png          # 新（GPT 綠底去綠）
+├── goshuin-stamp.png             # 新（GPT 綠底去綠）
+├── fox-sheet.png                 # 也更新成綠版本，方便日後重 crop
+├── fox-sheet-green.png           # 原始綠底（保留）
+├── goshuin-green.png             # 原始綠底（保留）
+├── .bg-bak/v1/                   # 上一版（Gemini 灰白底 fuzz transparent）
+└── .bg-bak/                      # 更早版（Gemini 寫實風）
+```
+
+### 下次開工先做
+
+跟 UX fixes（Q10 400ms + preload SFX/confetti）一起 commit + push。
+
+---
+
 ## 2026-05-02 15:30 — UX bug fix：Q10 1.5s 等待感 + 答題卡頓
 
 ### 症狀

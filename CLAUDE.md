@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-02 15:30 — UX bug fix：Q10 timer 1.5s → 400ms（isLast 不拖延）+ visit page mount 時 preload SFX & canvas-confetti（消除第一次答題卡頓）
+**最後更新**：2026-05-02 16:15 — GPT 重產 chibi 圖（綠底 chroma key）+ chroma-key 一鍵去綠（邊緣比 fuzz 灰白乾淨太多）+ UX fixes（Q10 400ms / preload SFX）一起推
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
