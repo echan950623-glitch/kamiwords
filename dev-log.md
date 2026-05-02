@@ -21,6 +21,112 @@
 
 ---
 
+## 2026-05-02 17:22 — Sprint X.6 UX polish（Task 1-4 完成）
+
+### 做了什麼
+
+XunC 在 production 試玩反饋 4 個 UX 問題，CC 跑完 Task 1-4 + Cowork Chrome 驗 production 全過。
+
+**Task 1：Q10 立即跳結算**
+
+之前 Sprint X.1/X.2 加的 400ms timer 還是會閃出「正確！🎉 + 查看結果」綠按鈕。修法是兩段式：
+
+```ts
+// question-card.tsx
+const handleChoice = (idx: number) => {
+  // ...設答案 + SFX + small confetti
+  if (isLast && isCorrectAnswer) {
+    nextFiredRef.current = true
+    onNextRef.current()  // 立即 fire，不走 useEffect timer
+  }
+}
+
+useEffect(() => {
+  if (!isAnswered || !isCorrect) return
+  if (isLast) return  // Q10 已在 handleChoice 立即 fire，guard 保險
+  const timer = setTimeout(() => { ... }, 1500)
+  // ...
+}, [isAnswered, isCorrect, isLast])
+```
+
+**Task 2：拔 5 連勝 combo**
+
+XunC 反映 banner + combo.mp3 + big confetti 太吵。刪掉 visit-client 內：
+- showCombo state + comboTimerRef + AnimatePresence motion.div
+- play('combo')、celebrate('big')
+
+`comboCount` setter 保留（給未來 stats 用）。bundle -210B。
+
+**Task 3：saveVisitAction 平行化**
+
+之前 8 個 sequential Supabase round trips。改成兩個 Promise.all：
+
+```ts
+// Phase A：visits.insert 拿 id 後，visit_answers + lanterns.select 平行
+const [answersResult, lanternsResult] = await Promise.all([
+  supabase.from('visit_answers').insert(answerRows),
+  supabase.from('user_lanterns').select('*').eq('user_id', user.id).in('word_id', wordIds),
+])
+
+// Phase C：completion check（含 goshuin/fox）跟 streak 平行
+const [{ isGoshuinEarned, newFoxStage }, currentStreak] = await Promise.all([
+  checkCompletionAndUpdateFox(),
+  updateStreak(),
+])
+```
+
+從 8 → ~5 round trips。理論 30-40% 改善。實測 production saveVisitAction 還是 5-6 秒慢（Tokyo region RTT 約 200-400ms × 5 trips + Vercel Edge cold start ~1s）。**Sprint X.6 改善有限，下個 sprint 必須做 RPC**。
+
+**Task 4：神社切換改 `/?shrine=...` query param**
+
+之前 `/shrines` 卡片直接連 `/shrine/[slug]/visit` 答題頁，太突兀。改成回首頁切 active shrine：
+
+- `shrines/page.tsx` 卡片 `<Link href="/shrine/[slug]/visit">` → `<Link href="/?shrine=[slug]">`
+- `app/page.tsx` 接 `searchParams.shrine`（預設 'inari'），用 `isShrineUnlocked()` 檢查
+- 沒解鎖的 shrine fallback 回 inari + console.warn
+- `getInariShrine()` 重構為通用 `getShrineBySlug(slug)`
+
+User flow：
+1. `/shrines` 看一覽
+2. 點 inari/meiji（已解鎖）→ 回 `/?shrine=...` 顯示對應 shrine dashboard
+3. 在 dashboard 點「今日參拜」CTA → 進 `/shrine/[slug]/visit` 答題
+
+點未解鎖的卡（disabled）/ 手打 URL `/?shrine=yasaka` → fallback 回 inari，行為一致。
+
+### Cowork Chrome production demo 驗證
+
+在 `kamiwords.vercel.app` 上跑：
+
+| 驗證項 | 結果 |
+|---|---|
+| `/?shrine=yasaka` 沒解鎖 fallback 回 inari | ✅ 顯示伏見稻荷 dashboard、米色 chibi 狐 |
+| `/shrines` 卡片 link 改成 `/?shrine=...` | ✅ inspect 確認 href 正確 |
+| Q10 答完無「正確！」一閃，立即 ⛩ spinner | ✅ click → small confetti + spinner，無綠按鈕 |
+| Ceremony overlay 觸發（御朱印 + Stage 2） | ✅ 紅印章「神」spring drop、狐狸進化、mega 撒花 |
+| DB 寫入正確 | ✅ visits=1 / goshuins=1 / fox_stage=2 / lanterns 342/342 |
+| GPT chibi 圖視覺乾淨無 fringe | ✅ 印章紅色純淨、四角狐臉清晰 |
+
+### 卡點 / 待決定
+
+**saveVisitAction 還是慢（5-6 秒）**
+
+平行化只把 8 → 5 round trips，每個 trip Tokyo RTT 200-400ms 沒法降。Root cause 是 Vercel Edge → Supabase 物理延遲 + Vercel Edge function cold start。**下個 sprint X.7 必做 `complete_visit` RPC**：把所有 writes（visits / visit_answers / user_lanterns SRS / goshuin / fox / streak）包進一個 Postgres function，server action 只 call 1 次 RPC。預期 5s → 1s。
+
+需要把 `lib/srs.ts` 的 `calculateNextReview` 移植到 plpgsql。
+
+### 下次開工先做
+
+1. **Sprint X.7 — complete_visit RPC**（saveVisitAction 從 5s → 1s）
+2. 朋友手機驗 PWA 加到主畫面（XunC 自驗）
+3. 域名 kamiwords.com（XunC 決定要不要買）
+
+### 觀察
+
+- production redirect 行為跟 dev mode 不同：dev mode 有 «redirect 到 / 而非 /shrines» minor bug，production 表現正確（redirect 鏈可清楚走完）
+- Vercel Deployment Protection 擋住 `kamiwords-git-main-*` preview alias，但 `kamiwords.vercel.app` custom alias 公開可用 — 朋友試玩用後者就好
+
+---
+
 ## 2026-05-02 16:15 — GPT 重產 chibi 圖 + chroma-key 一鍵去綠
 
 ### 做了什麼
