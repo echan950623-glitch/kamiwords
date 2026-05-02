@@ -2,11 +2,11 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { QuestionCard } from '@/components/shrine/question-card'
 import { saveVisitAction } from '@/actions/visit'
-import { play, preloadSfx } from '@/lib/sfx'
-import { celebrate, preloadConfetti } from '@/components/shrine/confetti'
+import { preloadSfx } from '@/lib/sfx'
+import { preloadConfetti } from '@/components/shrine/confetti'
 import type { Question } from '@/lib/question'
 import type { AnswerRecord } from '@/actions/visit'
 
@@ -34,15 +34,7 @@ export function VisitClient({
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
   const [, setComboCount] = useState(0)
-  const [showCombo, setShowCombo] = useState(false)
   const answersRef = useRef<AnswerRecord[]>([])
-  const comboTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (comboTimerRef.current) clearTimeout(comboTimerRef.current)
-    }
-  }, [])
 
   // Page mount 時 preload SFX + canvas-confetti，
   // 第一次答題不卡 mp3 解碼 / dynamic chunk import。
@@ -69,17 +61,7 @@ export function VisitClient({
       ]
 
       if (isCorrect) {
-        setComboCount(prev => {
-          const next = prev + 1
-          if (next % 5 === 0) {
-            play('combo')
-            celebrate('big')
-            setShowCombo(true)
-            if (comboTimerRef.current) clearTimeout(comboTimerRef.current)
-            comboTimerRef.current = setTimeout(() => setShowCombo(false), 2000)
-          }
-          return next
-        })
+        setComboCount(prev => prev + 1)
       } else {
         setComboCount(0)
       }
@@ -125,23 +107,6 @@ export function VisitClient({
 
   return (
     <main className="flex flex-col items-center min-h-screen pb-24">
-      {/* 5 連勝浮層 */}
-      <AnimatePresence>
-        {showCombo && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: -20 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-x-0 top-24 z-50 flex justify-center pointer-events-none"
-          >
-            <div className="bg-amber-500/90 text-stone-950 font-pixel font-bold text-lg px-6 py-3 rounded-2xl shadow-xl">
-              🔥 5 連勝！
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Header */}
       <nav className="w-full flex items-center justify-between px-4 py-3 border-b border-stone-800 mb-8">
         <button

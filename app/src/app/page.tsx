@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isShrineUnlocked } from '@/lib/shrines'
 import { SignOutButton } from '@/components/auth/sign-out-button'
 import { LanternGrid, type LanternStatus, type LanternItem } from '@/components/shrine/lantern-grid'
 import { Fox } from '@/components/shrine/fox'
@@ -36,20 +37,20 @@ interface StreakData {
 
 // ─── 資料抓取 ─────────────────────────────────────────────────────────────────
 
-async function getInariShrine(): Promise<ShrineData | null> {
+async function getShrineBySlug(slug: string): Promise<ShrineData | null> {
   try {
     const supabase = await createClient()
 
     const shrineResult = await supabase
       .from('shrines')
       .select('id, slug, name_jp, name_zh, theme_color')
-      .eq('slug', 'inari')
+      .eq('slug', slug)
       .single()
 
     if (shrineResult.error || !shrineResult.data) {
       console.error('【首頁】抓神社資料失敗:', {
+        slug,
         message: shrineResult.error?.message ?? 'data is null',
-        code: shrineResult.error?.code,
         timestamp: new Date().toISOString(),
       })
       return null
@@ -62,14 +63,6 @@ async function getInariShrine(): Promise<ShrineData | null> {
       .select('*', { count: 'exact', head: true })
       .eq('shrine_id', shrineId)
 
-    if (countResult.error) {
-      console.error('【首頁】抓單字數失敗:', {
-        message: countResult.error.message,
-        code: countResult.error.code,
-        timestamp: new Date().toISOString(),
-      })
-    }
-
     return {
       id: shrineResult.data.id,
       slug: shrineResult.data.slug,
@@ -80,6 +73,7 @@ async function getInariShrine(): Promise<ShrineData | null> {
     }
   } catch (error) {
     console.error('【首頁】未預期錯誤:', {
+      slug,
       message: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString(),
     })
@@ -283,7 +277,11 @@ async function getUserFoxStage(userId: string): Promise<number> {
 
 // ─── 頁面主體 ─────────────────────────────────────────────────────────────────
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: { shrine?: string }
+}) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -291,7 +289,24 @@ export default async function HomePage() {
 
   if (!user) redirect('/login')
 
-  const shrine = await getInariShrine()
+  // 從 query param 讀 active shrine（預設 inari）
+  const requestedSlug = searchParams.shrine ?? 'inari'
+
+  // unlock 防護：未解鎖的 shrine fallback 回 inari
+  let activeSlug = requestedSlug
+  if (requestedSlug !== 'inari') {
+    const { unlocked } = await isShrineUnlocked(requestedSlug, user.id)
+    if (!unlocked) {
+      console.warn('【首頁】shrine 未解鎖，fallback to inari:', {
+        requested: requestedSlug,
+        user_id: user.id,
+        timestamp: new Date().toISOString(),
+      })
+      activeSlug = 'inari'
+    }
+  }
+
+  const shrine = await getShrineBySlug(activeSlug)
 
   const [lanternStats, todayProgress, streak, foxStage] = shrine
     ? await Promise.all([

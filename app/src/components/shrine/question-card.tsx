@@ -36,16 +36,16 @@ export function QuestionCard({
   const isAnswered = selected !== null
   const isCorrect = selected === question.correctIndex
 
-  // 答對自動進下一題：一般 1.5s 給 user 看「正確！」回饋；
-  // 最後一題改 400ms — 結算頁本身有完整慶祝動畫，不需要在 visit page 多等
+  // 答對自動進下一題：1.5s 給 user 看「正確！」回饋
+  // Q10 在 handleChoice 已立即 fireNext，不走 timer
   useEffect(() => {
     if (!isAnswered || !isCorrect) return
-    const delay = isLast ? 400 : 1500
+    if (isLast) return
     const timer = setTimeout(() => {
       if (nextFiredRef.current) return
       nextFiredRef.current = true
       onNextRef.current()
-    }, delay)
+    }, 1500)
     return () => clearTimeout(timer)
   }, [isAnswered, isCorrect, isLast])
 
@@ -55,11 +55,19 @@ export function QuestionCard({
     setSelected(idx)
     onAnswer(idx, ms)
 
-    if (idx === question.correctIndex) {
+    const isCorrectAnswer = idx === question.correctIndex
+    if (isCorrectAnswer) {
       play('correct')
       celebrate('small')
     } else {
       play('wrong')
+    }
+
+    // Q10 答對：立即 fire onNext，跳過 feedback timer，
+    // 因為結算頁本身有完整慶祝動畫
+    if (isLast && isCorrectAnswer) {
+      nextFiredRef.current = true
+      onNextRef.current()
     }
   }
 

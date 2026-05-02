@@ -63,7 +63,9 @@ export async function saveVisitAction(
 
     const visitId = visitResult.data.id
 
-    // 2. 批次新增 visit_answers
+    // 2 & 3. 平行：visit_answers.insert + user_lanterns.select（兩者獨立）
+    const wordIds = Array.from(new Set(payload.answers.map(a => a.word_id)))
+
     const answerRows = payload.answers.map(a => ({
       visit_id: visitId,
       word_id: a.word_id,
@@ -73,19 +75,18 @@ export async function saveVisitAction(
       answered_at: new Date().toISOString(),
     }))
 
-    const answersResult = await supabase.from('visit_answers').insert(answerRows)
+    const [answersResult, lanternsResult] = await Promise.all([
+      supabase.from('visit_answers').insert(answerRows),
+      supabase
+        .from('user_lanterns')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('word_id', wordIds),
+    ])
+
     if (answersResult.error) {
       throw new Error(`保存答題記錄失敗: ${answersResult.error.message}`)
     }
-
-    // 3. 計算 SRS 並 upsert user_lanterns
-    const wordIds = Array.from(new Set(payload.answers.map(a => a.word_id)))
-
-    const lanternsResult = await supabase
-      .from('user_lanterns')
-      .select('*')
-      .eq('user_id', user.id)
-      .in('word_id', wordIds)
 
     if (lanternsResult.error) {
       throw new Error(`讀取燈籠資料失敗: ${lanternsResult.error.message}`)
@@ -143,101 +144,111 @@ export async function saveVisitAction(
       throw new Error(`更新燈籠狀態失敗: ${upsertResult.error.message}`)
     }
 
-    // 4. 檢查是否全部 mastered → 觸發御朱印 + 狐狸進化
-    let isGoshuinEarned = false
-    let newFoxStage: number | null = null
-
-    try {
-      const [totalResult, masteredResult, goshuinResult] = await Promise.all([
-        supabase
-          .from('shrine_words')
-          .select('*', { count: 'exact', head: true })
-          .eq('shrine_id', payload.shrine_id),
-        supabase
-          .from('user_lanterns')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('shrine_id', payload.shrine_id)
-          .eq('state', 'mastered'),
-        supabase
-          .from('user_goshuin')
-          .select('user_id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('shrine_id', payload.shrine_id),
-      ])
-
-      const totalWords = totalResult.count ?? 0
-      const masteredWords = masteredResult.count ?? 0
-      const alreadyHasGoshuin = (goshuinResult.count ?? 0) > 0
-      const isComplete = totalWords > 0 && masteredWords >= totalWords
-
-      if (isComplete && !alreadyHasGoshuin) {
-        // 首次完成此神社！
-        const insertResult = await supabase
-          .from('user_goshuin')
-          .insert({ user_id: user.id, shrine_id: payload.shrine_id })
-
-        if (!insertResult.error) {
-          isGoshuinEarned = true
-
-          // 更新或建立狐狸
-          const foxResult = await supabase
-            .from('user_fox')
-            .select('stage, evolved_at')
+    // 4 & 5. 完成度檢查（御朱印 + 狐狸進化）跟 streak 平行
+    const checkCompletionAndUpdateFox = async (): Promise<{
+      isGoshuinEarned: boolean
+      newFoxStage: number | null
+    }> => {
+      let isGoshuinEarned = false
+      let newFoxStage: number | null = null
+      try {
+        const [totalResult, masteredResult, goshuinResult] = await Promise.all([
+          supabase
+            .from('shrine_words')
+            .select('*', { count: 'exact', head: true })
+            .eq('shrine_id', payload.shrine_id),
+          supabase
+            .from('user_lanterns')
+            .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id)
-            .single()
+            .eq('shrine_id', payload.shrine_id)
+            .eq('state', 'mastered'),
+          supabase
+            .from('user_goshuin')
+            .select('user_id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('shrine_id', payload.shrine_id),
+        ])
 
-          if (foxResult.error || !foxResult.data) {
-            // 第一次：建立 stage 2
-            await supabase.from('user_fox').insert({
-              user_id: user.id,
-              stage: 2,
-              evolved_at: [new Date().toISOString()],
-            })
-            newFoxStage = 2
-          } else {
-            const currentStage = foxResult.data.stage
-            if (currentStage < 9) {
-              const newStage = currentStage + 1
-              const newEvolvedAt = (foxResult.data.evolved_at ?? []).concat([
-                new Date().toISOString(),
-              ])
-              await supabase
-                .from('user_fox')
-                .update({ stage: newStage, evolved_at: newEvolvedAt })
-                .eq('user_id', user.id)
-              newFoxStage = newStage
+        const totalWords = totalResult.count ?? 0
+        const masteredWords = masteredResult.count ?? 0
+        const alreadyHasGoshuin = (goshuinResult.count ?? 0) > 0
+        const isComplete = totalWords > 0 && masteredWords >= totalWords
+
+        if (isComplete && !alreadyHasGoshuin) {
+          // 首次完成此神社！
+          const insertResult = await supabase
+            .from('user_goshuin')
+            .insert({ user_id: user.id, shrine_id: payload.shrine_id })
+
+          if (!insertResult.error) {
+            isGoshuinEarned = true
+
+            // 更新或建立狐狸
+            const foxResult = await supabase
+              .from('user_fox')
+              .select('stage, evolved_at')
+              .eq('user_id', user.id)
+              .single()
+
+            if (foxResult.error || !foxResult.data) {
+              // 第一次：建立 stage 2
+              await supabase.from('user_fox').insert({
+                user_id: user.id,
+                stage: 2,
+                evolved_at: [new Date().toISOString()],
+              })
+              newFoxStage = 2
+            } else {
+              const currentStage = foxResult.data.stage
+              if (currentStage < 9) {
+                const newStage = currentStage + 1
+                const newEvolvedAt = (foxResult.data.evolved_at ?? []).concat([
+                  new Date().toISOString(),
+                ])
+                await supabase
+                  .from('user_fox')
+                  .update({ stage: newStage, evolved_at: newEvolvedAt })
+                  .eq('user_id', user.id)
+                newFoxStage = newStage
+              }
             }
+          } else {
+            console.error('【saveVisitAction】御朱印寫入失敗:', {
+              message: insertResult.error.message,
+              timestamp: new Date().toISOString(),
+            })
           }
-        } else {
-          console.error('【saveVisitAction】御朱印寫入失敗:', {
-            message: insertResult.error.message,
-            timestamp: new Date().toISOString(),
-          })
         }
+      } catch (completionError) {
+        console.error('【saveVisitAction】完成度檢查失敗:', {
+          message:
+            completionError instanceof Error
+              ? completionError.message
+              : String(completionError),
+          timestamp: new Date().toISOString(),
+        })
       }
-    } catch (completionError) {
-      // 御朱印/狐狸失敗不影響主流程
-      console.error('【saveVisitAction】完成度檢查失敗:', {
-        message:
-          completionError instanceof Error
-            ? completionError.message
-            : String(completionError),
-        timestamp: new Date().toISOString(),
-      })
+      return { isGoshuinEarned, newFoxStage }
     }
 
-    // 5. 更新 streak
-    let currentStreak = 0
-    try {
-      const streakResult = await upsertStreak(supabase, user.id)
-      currentStreak = streakResult.current_streak
-    } catch (streakError) {
-      console.error('【saveVisitAction】Streak 更新失敗:', {
-        message: streakError instanceof Error ? streakError.message : String(streakError),
-        timestamp: new Date().toISOString(),
-      })
+    const updateStreak = async (): Promise<number> => {
+      try {
+        const streakResult = await upsertStreak(supabase, user.id)
+        return streakResult.current_streak
+      } catch (streakError) {
+        console.error('【saveVisitAction】Streak 更新失敗:', {
+          message: streakError instanceof Error ? streakError.message : String(streakError),
+          timestamp: new Date().toISOString(),
+        })
+        return 0
+      }
     }
+
+    const [
+      { isGoshuinEarned, newFoxStage },
+      currentStreak,
+    ] = await Promise.all([checkCompletionAndUpdateFox(), updateStreak()])
 
     return { visitId, isGoshuinEarned, newFoxStage, currentStreak }
   } catch (error) {

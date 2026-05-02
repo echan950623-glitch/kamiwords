@@ -97,7 +97,7 @@ export default async function ShrinesPage() {
               return disabled ? (
                 <div key={shrine.id}>{card}</div>
               ) : (
-                <Link key={shrine.id} href={`/shrine/${shrine.slug}/visit`}>
+                <Link key={shrine.id} href={`/?shrine=${shrine.slug}`}>
                   {card}
                 </Link>
               )

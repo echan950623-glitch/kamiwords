@@ -3,6 +3,22 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-02 17:22 — Sprint X.6 UX polish（Task 1-4）
+
+### 做了什麼
+- **Task 1：Q10 立即跳結算** — `question-card.tsx` handleChoice 內 isLast && isCorrect 時直接 `nextFiredRef.current = true; onNextRef.current()`，useEffect timer 加 `if (isLast) return` guard。Q10 答對後 0 lag 進 ⛩ spinner。
+- **Task 2：拔 combo effects** — `visit-client.tsx` 刪 `showCombo` state、`comboTimerRef`、cleanup useEffect、banner AnimatePresence；handleAnswer 保留 `setComboCount` 計數但移除 `play('combo')` + `celebrate('big')` + `setShowCombo`。bundle 從 4.89kB → 4.68kB。
+- **Task 3：saveVisitAction 平行化** — Phase A：`visit_answers.insert` 和 `user_lanterns.select` 改 `Promise.all`（兩者獨立，visit_id 只有 insert 需要）；Phase C：`checkCompletionAndUpdateFox()` 和 `updateStreak()` 兩個 async fn 改 `Promise.all`。round trips ~8 → ~5。
+- **Task 4：神社切換** — `shrines/page.tsx` Link 改 `/?shrine=${slug}`；`page.tsx` 加 `isShrineUnlocked` import、`getInariShrine` rename `getShrineBySlug(slug)`、`HomePage` 接 `searchParams.shrine`（預設 inari）+ unlock 防護（未解鎖 fallback inari + console.warn）。
+
+### 卡在哪 / 待決定
+- Task 0（清 .next）跳過 — 只跑 typecheck/build 不需重啟 dev server
+- 所有 4 task `tsc --noEmit` + `pnpm build` 全乾淨
+
+### 下次開工先做
+- Task 5（Cowork 用 Chrome MCP 跑完整 demo 驗）
+- git commit + push → Vercel auto-deploy
+
 ---
 
 ## 2026-05-02 16:15 — GPT 重產 chibi 圖 + chroma-key 一鍵去綠

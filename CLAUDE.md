@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-02 16:15 — GPT 重產 chibi 圖（綠底 chroma key）+ chroma-key 一鍵去綠（邊緣比 fuzz 灰白乾淨太多）+ UX fixes（Q10 400ms / preload SFX）一起推
+**最後更新**：2026-05-02 17:22 — Sprint X.6 UX polish（Task 1-4 完成）
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -30,9 +30,10 @@
 - ✅ **Sprint X.4 — shrine 解鎖 gate**：`lib/shrines.ts`（`getShrinesWithUnlockStatus` + `isShrineUnlocked`）讀 `unlock_condition` JSONB schema、`/shrines` 神社一覽頁（10 座，三態 unlocked/locked/inactive）、首頁底 nav「神社」連到 `/shrines`、`/shrine/[slug]/visit` server-side gate 防 URL 直訪、Cowork demo 走「reset → meiji 鎖 → 完成 inari → meiji 解鎖」全流程驗過。**未來補 N4-N1 字直接 schema-driven 自動套用，不用改 UI 邏輯**
 - ✅ **Chibi 圖片資產替換**：`fox-sheet.png` Gemini 一次產 9 階段 sprite sheet → ImageMagick 沙箱裁成 `fox-stage-{1..9}.png`、chibi 風 `goshuin-stamp.png`（神 字紅印章 + 4 角 chibi 鳥居/狐臉）、`<ShrineCeremonyOverlay>` 的 📜/🦊 emoji 全改 `<Image>` + drop-shadow glow。舊寫實風保留 `.realistic.bak.png` 備份
 - ✅ **Sprint X.5 — N4 字源匯入**：scripts/gen_n4_migrations.py、Cowork agent 直翻 640 N4 字（不走 Anthropic API）、006_n4_words_yasaka.sql（320 字）+ 007_n4_words_heian.sql（320 字）已套上 Supabase。yasaka 320 字（N4-basic）+ heian 320 字（N4-adv）= 640 字全 N4。**N5 + N4 共 1324 字 / 4 座神社**
+- ✅ **Sprint X.6 — UX polish（Task 1-4）**：Q10 答對立即跳結算（handleChoice 直接 fire，不走 timer）、5 連勝 combo banner/音效/confetti 拔掉（comboCount state 保留供未來 stats）、saveVisitAction 平行化（Phase A：visit_answers + user_lanterns.select 同步、Phase C：completion check + streak 同步，~8→~5 round trips）、`/shrines` 卡片改 `/?shrine=slug` 路徑 + 首頁接 searchParams + `getInariShrine` 改 `getShrineBySlug(slug)` + unlock 防護（未解鎖 fallback inari）
 
 **進行中**：
-- ⏳ git push Sprint X.5 + 圖片資產 → Vercel auto-deploy
+- ⏳ Task 5（Cowork demo 驗） + git push → Vercel auto-deploy
 
 **待做**：
 - 📋 Sprint X.3：神籤每日抽 + 招財貓功能化（首頁進場彩蛋 + 結算頁 60% 抽神籤）
