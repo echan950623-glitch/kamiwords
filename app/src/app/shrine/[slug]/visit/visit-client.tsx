@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { QuestionCard } from '@/components/shrine/question-card'
 import { saveVisitAction } from '@/actions/visit'
-import { play } from '@/lib/sfx'
-import { celebrate } from '@/components/shrine/confetti'
+import { play, preloadSfx } from '@/lib/sfx'
+import { celebrate, preloadConfetti } from '@/components/shrine/confetti'
 import type { Question } from '@/lib/question'
 import type { AnswerRecord } from '@/actions/visit'
 
@@ -42,6 +42,13 @@ export function VisitClient({
     return () => {
       if (comboTimerRef.current) clearTimeout(comboTimerRef.current)
     }
+  }, [])
+
+  // Page mount 時 preload SFX + canvas-confetti，
+  // 第一次答題不卡 mp3 解碼 / dynamic chunk import。
+  useEffect(() => {
+    preloadSfx()
+    preloadConfetti()
   }, [])
 
   const currentQuestion = questions[currentIndex]

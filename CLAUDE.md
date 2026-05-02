@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-02 15:26 — Bug fix：fox-stage-* + goshuin-stamp 去背（Gemini sheet 灰白格紋當背景，ImageMagick fuzz transparent 雙色 + 白色清掉）
+**最後更新**：2026-05-02 15:30 — UX bug fix：Q10 timer 1.5s → 400ms（isLast 不拖延）+ visit page mount 時 preload SFX & canvas-confetti（消除第一次答題卡頓）
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）

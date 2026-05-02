@@ -36,16 +36,18 @@ export function QuestionCard({
   const isAnswered = selected !== null
   const isCorrect = selected === question.correctIndex
 
-  // 答對 1.5s 後自動進下一題（timer path 不更新 state，component 即將 unmount）
+  // 答對自動進下一題：一般 1.5s 給 user 看「正確！」回饋；
+  // 最後一題改 400ms — 結算頁本身有完整慶祝動畫，不需要在 visit page 多等
   useEffect(() => {
     if (!isAnswered || !isCorrect) return
+    const delay = isLast ? 400 : 1500
     const timer = setTimeout(() => {
       if (nextFiredRef.current) return
       nextFiredRef.current = true
       onNextRef.current()
-    }, 1500)
+    }, delay)
     return () => clearTimeout(timer)
-  }, [isAnswered, isCorrect])
+  }, [isAnswered, isCorrect, isLast])
 
   const handleChoice = (idx: number) => {
     if (isAnswered) return
@@ -161,7 +163,7 @@ export function QuestionCard({
                 disabled={isNextFired}
                 className="w-full h-12 rounded-xl bg-emerald-700 hover:bg-emerald-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-base transition-all duration-150"
               >
-                {isLast ? '查看結果 🏮 (1.5s)' : '下一題 (1.5s)'}
+                {isLast ? '查看結果 🏮' : '下一題 (1.5s)'}
               </button>
             ) : (
               // 答錯：手動 next，讓 user 看清正解

@@ -5,6 +5,72 @@
 
 ---
 
+## 2026-05-02 15:30 — UX bug fix：Q10 1.5s 等待感 + 答題卡頓
+
+### 症狀
+
+XunC 反映兩個 production 上的 UX 問題：
+1. 「結算前最後一題還是會跑出來」
+2. 「按一個按鍵會卡一陣子」
+
+### 根因 1：Q10 1.5s 等待感
+
+`question-card.tsx` 的 auto-advance timer 一律 1.5s。Q10 答對後 user 看到「正確！🎉 + 查看結果 (1.5s)」按鈕等 1.5s 才 fire onNext → 主觀上像是「最後一題還在那邊跑」。實際邏輯是答完 Q10 在 visit page 多停 1.5s 給「答對 feedback」，但這跟結算頁本身的儀式動畫 + mega confetti 重疊，是冗餘等待。
+
+修法：
+```ts
+const delay = isLast ? 400 : 1500
+```
+
+isLast=true 時 timer 縮成 400ms，user 答完 Q10 幾乎立刻進入結算頁的儀式。其他題目維持 1.5s 給「正確！」visual feedback 時間。Button 文字 isLast 時也拿掉「(1.5s)」倒數。
+
+### 根因 2：答題第一次卡頓
+
+兩個嫌疑：
+- **Audio.play() 第一次**：mp3 fetch + decode 第一次 trigger 時 100-300ms latency
+- **canvas-confetti 動態 import**：dynamic chunk 第一次 load 100-200ms
+
+兩者在 Q1 答完瞬間第一次觸發，user 感覺到「按下去卡一下」。
+
+修法：visit-client mount 時 preload 兩者：
+
+```ts
+// lib/sfx.ts
+export function preloadSfx() {
+  for (const name of ['correct', 'wrong', 'combo', 'stamp']) {
+    const audio = new Audio(`/sfx/${name}.mp3`)
+    audio.preload = 'auto'
+    audio.volume = 0
+    audio.load() // 觸發 fetch + decode，不出聲
+    cache[name] = audio
+  }
+}
+
+// components/shrine/confetti.tsx
+export async function preloadConfetti() {
+  const confetti = (await import('canvas-confetti')).default
+  confetti({ particleCount: 0 })  // particleCount: 0 = 不撒花、純 warm chunk
+}
+
+// visit-client.tsx
+useEffect(() => {
+  preloadSfx()
+  preloadConfetti()
+}, [])
+```
+
+進 visit page 那一刻就同時 fetch 4 個 mp3 + canvas-confetti chunk，user 看完 nav header / Q1 題目 stimulus 之間的 200ms preload 完。第一次按答案不再卡。
+
+### 卡在哪 / 待決定
+
+無。直接 ship。
+
+### 下次開工先做
+
+跟之前的 PWA 補強 + 去背修正一起推（前一個 commit 把 PWA + 去背都已 push 過 3ebafda）。這個是 follow-up commit。
+
+---
+
 ## 2026-05-02 15:26 — Bug fix：fox-stage-* + goshuin-stamp 沒去背
 
 ### 症狀
