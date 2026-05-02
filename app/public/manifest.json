@@ -1,24 +1,51 @@
 {
   "name": "KamiWords｜神明單字",
   "short_name": "KamiWords",
-  "description": "以日本神社參拜為主題的日文單字學習 PWA",
+  "description": "以日本神社參拜為主題的日文單字學習 PWA — 點亮燈籠、收集御朱印、養成你的狐狸",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0c0a09",
   "theme_color": "#C63A2A",
   "orientation": "portrait",
+  "lang": "zh-TW",
+  "categories": ["education", "lifestyle"],
   "icons": [
     {
       "src": "/icon-192",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icon-512",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "今日參拜",
+      "short_name": "參拜",
+      "description": "開始今天的單字學習",
+      "url": "/shrine/inari/visit",
+      "icons": [{ "src": "/icon-192", "sizes": "192x192" }]
+    },
+    {
+      "name": "神社一覽",
+      "short_name": "神社",
+      "description": "查看所有神社解鎖狀態",
+      "url": "/shrines",
+      "icons": [{ "src": "/icon-192", "sizes": "192x192" }]
     }
   ]
 }
+</content>
+</invoke>

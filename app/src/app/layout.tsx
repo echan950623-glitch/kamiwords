@@ -12,17 +12,33 @@ const notoSansJP = Noto_Sans_JP({
 
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://kamiwords.vercel.app'),
   title: 'KamiWords｜神明單字',
-  description: '以日本神社參拜為主題的日文單字學習 PWA',
+  description: '以日本神社參拜為主題的日文單字學習 PWA — 點亮燈籠、收集御朱印、養成你的狐狸',
   manifest: '/manifest.json',
+  applicationName: 'KamiWords',
+  appleWebApp: {
+    capable: true,
+    title: 'KamiWords',
+    statusBarStyle: 'black-translucent',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_TW',
+    title: 'KamiWords｜神明單字',
+    description: '以日本神社參拜為主題的日文單字學習 PWA',
+    siteName: 'KamiWords',
+  },
 }
 
 export const viewport: Viewport = {
   themeColor: '#C63A2A',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // 不限制 maximumScale / userScalable — 讓 user 可放大看小字（a11y 最佳實踐）
 }
 
 export default function RootLayout({

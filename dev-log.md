@@ -5,6 +5,75 @@
 
 ---
 
+## 2026-05-01 15:15 — PWA 補強（朋友試玩前最後一道關卡）
+
+### 做了什麼
+
+跑 production endpoint 體檢 + 補強 manifest / metadata。
+
+**Production PWA 體檢（`kamiwords.vercel.app`）**
+
+curl 全綠：
+- `/manifest.json` 200 / 548 bytes / application/json
+- `/sw.js` 200 / 20640 bytes（next-pwa generate）
+- `/icon-192` 200 / 3799 bytes / image/png（Twemoji ⛩ 紅底）
+- `/icon-512` 200 / 10089 bytes / image/png
+- `/apple-icon` 200 / 3400 bytes / image/png
+
+**注意**：`kamiwords-git-main-xuncs-projects.vercel.app`（git branch alias）被 Vercel Deployment Protection 擋（401），但 production custom alias `kamiwords.vercel.app` 公開。買域名後 `kamiwords.com` 就成 production canonical URL。
+
+**manifest.json 補強**
+
+```diff
++ "scope": "/",
++ "lang": "zh-TW",
++ "categories": ["education", "lifestyle"],
+- "purpose": "any maskable" // 同一 icon 兼差兩用 → mask 切到鳥居腳
++ "purpose": "any" // icon-192 / icon-512 純展示用
++ // 新增 /icon-maskable 專用，內容收進中央 ~50% safe zone
++ "shortcuts": [
++   { "name": "今日參拜", "url": "/shrine/inari/visit", ... },
++   { "name": "神社一覽", "url": "/shrines", ... }
++ ]
+```
+
+Android 長按 app icon 會跳出兩個快捷入口。
+
+**新增 `/icon-maskable` route**
+
+`src/app/icon-maskable/route.tsx`：next/og ImageResponse，紅底 + ⛩ fontSize 240（vs 一般 icon-512 的 320），確保中央 80% safe zone 內容不被任何 mask 形狀切到。
+
+**`layout.tsx` metadata 大補強**
+
+新增：
+- `metadataBase: new URL('https://kamiwords.vercel.app')` — OG 絕對 URL 解析
+- `applicationName: 'KamiWords'`
+- `appleWebApp.capable / title / statusBarStyle: 'black-translucent'` — iOS 加到主畫面後標準列融入背景
+- `formatDetection.telephone: false` — 防 iOS 把日期/數字誤判成電話自動加超連結
+- `openGraph` — 分享連結時 LINE / Threads 預覽卡片有正確標題描述
+
+移除：
+- `maximumScale: 1` + `userScalable: false` — 解開 pinch-zoom，方便 user 放大看小字（kanji 細節），符合 a11y 最佳實踐。Lighthouse 也會打分。
+
+### 卡在哪 / 待決定
+
+- **icon 視覺**：目前 Twemoji ⛩ 紅底的設計算夠用（乾淨、識別度 OK、跟主題色合）。可選升級成 chibi 狐狸（fox-stage-9 那張九尾金光）作為 brand icon，但要 ImageResponse 從 public/ 載 PNG，多一道工。先 ship 現版本，朋友試玩有 feedback 再說。
+- **screenshots manifest 欄位**：可加 1080×1920 的 app screenshot 讓 install prompt 更豐富，但 Lighthouse 不強制。延後。
+
+### 下次開工先做
+
+1. **手機驗證「加到主畫面」流程**（XunC 自驗，Cowork 沒法 OAuth + 手機開）：
+   - iOS Safari 開 `kamiwords.vercel.app` → 分享 → 加到主畫面 → 確認 icon / 名稱 / 啟動畫面
+   - Android Chrome 開同 URL → 三點選單 → 安裝應用程式 → 同上
+2. **域名 kamiwords.com**（30 分鐘 + DNS 等 1 天）
+3. **第一個朋友試玩**
+
+### Vercel Deployment Protection 觀察
+
+Sprint X.4 那個 `/shrine/meiji/visit redirect 終點停在 / 而非 /shrines` 的 minor bug 之前歸因 dev mode redirect quirk。現在發現 production preview URL 被 Deployment Protection 401 擋著，無法 curl 體檢。下次給朋友試玩前，要確認 `kamiwords.vercel.app`（custom alias）跟 `kamiwords.com`（域名買完後）兩條 URL 都不被 protection 擋。
+
+---
+
 ## 2026-05-01 00:16 — Fox 元件 stage prop（首頁動態載 evolved 狐狸）
 
 ### 做了什麼
