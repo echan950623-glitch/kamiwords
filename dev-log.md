@@ -5,6 +5,57 @@
 
 ---
 
+## 2026-05-02 15:26 — Bug fix：fox-stage-* + goshuin-stamp 沒去背
+
+### 症狀
+
+XunC 看 production 首頁，狐狸下面有一個明顯的灰白格紋方框，根本沒去背。
+
+### 根因
+
+Gemini Imagen 生成 chibi sprite sheet 時，把「transparency indicator」(灰白格紋) **直接畫進 RGB pixels**，PNG 雖然有 alpha channel 但全 opaque (alpha=1)。我之前 imagemagick crop 9 stages 跟存 goshuin 時都繼承這 bug，沒人發現。
+
+corner pixel 抽樣：
+```
+fox-stage-1.png 角 = srgba(223,225,224,1)  # alpha=1, 不是 0
+goshuin-stamp.png 角 = 同樣 opaque
+```
+
+### 修法
+
+ImageMagick `-fuzz N% -transparent COLOR` 把兩個格紋色變透明。實際 sample 出兩個 chess tile color：
+- Light tile: `#DFDFDF` (223, 223, 223)
+- Dark tile: `#B6B6B6` (182, 182, 182)
+
+```bash
+# fox stage 1-9：fuzz 8% 雙色
+convert fox-stage-N.png \
+  -fuzz 8% -transparent "#DFDFDF" \
+  -fuzz 8% -transparent "#B6B6B6" \
+  fox-stage-N.png
+
+# goshuin-stamp 額外有純白 #FFFFFF 區域，fuzz 14% 三色
+convert goshuin-stamp.png \
+  -fuzz 14% -transparent "#FFFFFF" \
+  -fuzz 14% -transparent "#DFDFDF" \
+  -fuzz 14% -transparent "#B6B6B6" \
+  goshuin-stamp.png
+```
+
+### 驗證
+
+每張 4 角 alpha=0、視覺上格紋全清、狐狸/印章本體完整保留（fuzz 雖較激進但金黃色狐狸跟紅色印章跟灰白格紋在色相上夠遠不會誤殺）。
+
+### 安全網
+
+原檔備份到 `app/public/art/.bg-bak/`（10 張 PNG），加進 `.gitignore` 不入 repo。萬一未來 fuzz 處理過頭可以 rollback。
+
+### 教訓
+
+下次 user 從 Gemini 拿圖時 SOP 加一步「imagemagick check alpha + 必要時 fuzz transparent」。Gemini 的「transparent background」承諾不可信，要驗。
+
+---
+
 ## 2026-05-01 15:15 — PWA 補強（朋友試玩前最後一道關卡）
 
 ### 做了什麼
