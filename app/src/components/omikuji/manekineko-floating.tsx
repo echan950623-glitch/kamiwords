@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { drawOmikujiAction } from '@/actions/omikuji'
 import { OmikujiModal } from './omikuji-modal'
@@ -92,16 +93,25 @@ export function ManekinekoFloating({
             todayAlreadyDrawn ? '查看今日神籤' : '招財貓出現了！點我抽神籤'
           }
         >
-          {/* 紅圓背景 + 招財貓 emoji（chibi PNG 後續補） */}
+          {/* 紅圓背景 + chibi 招財貓 PNG */}
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg"
+            className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg overflow-hidden"
             style={{
               background: 'radial-gradient(circle at 30% 30%, #FFE5A0, #C63A2A)',
               boxShadow: '0 4px 12px rgba(198, 58, 42, 0.5)',
               border: '3px solid #FAF3DD',
             }}
           >
-            🐱
+            <Image
+              src="/art/maneki-neko.png"
+              width={56}
+              height={56}
+              alt="招財貓"
+              className="pixel-art"
+              style={{ filter: 'drop-shadow(0 0 6px rgba(255,229,160,0.6))' }}
+              unoptimized
+              priority
+            />
           </div>
           {/* 「神籤」小標 */}
           <div
