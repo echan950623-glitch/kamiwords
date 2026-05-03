@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-02 17:22 — Sprint X.6 UX polish（Task 1-4 完成）
+**最後更新**：2026-05-03 00:15 — Sprint X.7 complete_visit RPC 上線
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -31,9 +31,10 @@
 - ✅ **Chibi 圖片資產替換**：`fox-sheet.png` Gemini 一次產 9 階段 sprite sheet → ImageMagick 沙箱裁成 `fox-stage-{1..9}.png`、chibi 風 `goshuin-stamp.png`（神 字紅印章 + 4 角 chibi 鳥居/狐臉）、`<ShrineCeremonyOverlay>` 的 📜/🦊 emoji 全改 `<Image>` + drop-shadow glow。舊寫實風保留 `.realistic.bak.png` 備份
 - ✅ **Sprint X.5 — N4 字源匯入**：scripts/gen_n4_migrations.py、Cowork agent 直翻 640 N4 字（不走 Anthropic API）、006_n4_words_yasaka.sql（320 字）+ 007_n4_words_heian.sql（320 字）已套上 Supabase。yasaka 320 字（N4-basic）+ heian 320 字（N4-adv）= 640 字全 N4。**N5 + N4 共 1324 字 / 4 座神社**
 - ✅ **Sprint X.6 — UX polish（Task 1-4）**：Q10 答對立即跳結算（handleChoice 直接 fire，不走 timer）、5 連勝 combo banner/音效/confetti 拔掉（comboCount state 保留供未來 stats）、saveVisitAction 平行化（Phase A：visit_answers + user_lanterns.select 同步、Phase C：completion check + streak 同步，~8→~5 round trips）、`/shrines` 卡片改 `/?shrine=slug` 路徑 + 首頁接 searchParams + `getInariShrine` 改 `getShrineBySlug(slug)` + unlock 防護（未解鎖 fallback inari）
+- ✅ **Sprint X.7 — `complete_visit` Postgres RPC**：`008_complete_visit_rpc.sql`（一次 1:1 還原 visit.ts + srs.ts + streak.ts，security invoker → 走 user RLS）、user_fox.stage constraint 1-5 → 1-9 順手修（schema 跟 TS code mismatch bug，第 5 次拿御朱印會 fail）、`saveVisitAction` 從 ~5 round trips 壓成 1 個 `supabase.rpc('complete_visit', ...)`、Tokyo Edge → Tokyo DB 預期 5-6s → ~1s
 
 **進行中**：
-- ⏳ Task 5（Cowork demo 驗） + git push → Vercel auto-deploy
+- ⏳ Cowork Chrome 驗 X.7：production saveVisit 速度從 5s → 1s + git push → Vercel auto-deploy
 
 **待做**：
 - 📋 Sprint X.3：神籤每日抽 + 招財貓功能化（首頁進場彩蛋 + 結算頁 60% 抽神籤）

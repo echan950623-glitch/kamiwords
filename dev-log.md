@@ -3,6 +3,46 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-03 00:15 — Sprint X.7 `complete_visit` RPC 上線
+
+### 做了什麼
+
+Sprint X.6 平行化只把 round trips ~8→~5，但 Tokyo Edge → Tokyo DB RTT 物理上限制每趟 200-400ms，使用者按下 Q10 仍要等 5-6 秒才看到結算。Sprint X.7 直接搬到 DB 內：一個 Postgres RPC 包掉所有邏輯。
+
+**Task 1（spawned agent）：寫 008 migration**
+- agent 1:1 翻譯 `src/actions/visit.ts` + `src/lib/srs.ts` + `src/lib/streak.ts` → plpgsql
+- function signature：`complete_visit(p_shrine_id uuid, p_answers jsonb, p_new_words_count int, p_review_words_count int) returns table(visit_id, is_goshuin_earned, new_fox_stage, current_streak)`
+- `language plpgsql security invoker` → `auth.uid()` 取 user，全部走 user 自己的 RLS policy，沒 escalate 權限
+- 7 step：insert visits → insert visit_answers (jsonb_array_elements) → FOR LOOP DISTINCT ON 取每個 word_id 最後一筆答題做 SRS calc + upsert user_lanterns → 完成度檢查 → goshuin + fox upsert → streak upsert → return query
+- SRS 常數寫死在 plpgsql 跟 TS 對齊（DEFAULT_EASE 2.5、MIN_EASE 1.3、MAX_INTERVAL 365、MASTERED_MIN_ACCURACY 0.9、MASTERED_MIN_INTERVAL 30）
+
+**Task 2：順手修 schema bug**
+- `001_initial_schema.sql` 寫 `user_fox.stage check (stage between 1 and 5)`，但 TS code 升到 stage 9。pre-fix 不修朋友第 5 次拿御朱印會撞 constraint check。
+- 008 prepend `alter table user_fox drop constraint if exists user_fox_stage_check; alter table ... add constraint ... check (stage between 1 and 9);`
+
+**Task 3：apply migration（碰到 1 個小坑）**
+- 第一版用 `do $$ ... pg_get_constraintdef ilike '%stage%between 1 and 5%'`，但實際 def 是 `((stage >= 1) AND (stage <= 5))` — 沒 match → 沒 drop → 加新 constraint 撞同名 → fail
+- 改成 `drop constraint if exists user_fox_stage_check` by name → apply 成功
+- 驗證：`pg_proc` 1 row、4 args、returns table、security invoker；user_fox check `(stage >= 1 and stage <= 9)`
+
+**Task 4：rewrite `app/src/actions/visit.ts`**
+- 從 ~262 行壓到 91 行
+- 全部 logic 換成 `supabase.rpc('complete_visit', {...}).returns<CompleteVisitRpcRow[]>()`
+- interface 維持不變（caller `visit-client.tsx` / `result/page.tsx` 不動）
+- `srs.ts` / `streak.ts` lib 保留供未來 client 端用（首頁可能要算「下次複習時間」）
+
+### 卡在哪 / 待決定
+
+- 沒卡。下一步是 Cowork 在 production 用 Chrome 驗速度（XunC 自驗或下個 session 我用 chrome MCP 跑）。
+
+### 下次開工先做
+
+- Cowork Chrome 驗 X.7：在 production demo-master + 答 1 題 → 量按下後到 result page 顯示時間（預期 5-6s → ~1s）
+- 量完 git push → Vercel auto-deploy（其實要先 push 才有 production 版本驗，順序需修）
+- 朋友手機試玩
+
+---
+
 ## 2026-05-02 17:22 — Sprint X.6 UX polish（Task 1-4）
 
 ### 做了什麼
