@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-03 22:05 — Sprint X.9 N3 字源匯入完成
+**最後更新**：2026-05-03 23:06 — Sprint X.9-X.11 全 JLPT 字源匯入完成（N3/N2/N1）
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -36,7 +36,10 @@
 - ✅ **Sprint X.8 — Tokyo region + /result 並行**：`vercel.json` regions: ["hnd1"]、function 從 iad1 → hnd1 同 region Supabase（RTT 250ms → ~5ms）、/result page 4 sequential queries → 3 RTT（auth → visits+shrines 並行 → user_lanterns）
 - ✅ **Advisor cleanup（010 + 011）**：`complete_visit`/`draw_omikuji` SET search_path、9 RLS policy 改 (select auth.uid())、9 FK covering index、`visit_answers` surrogate PK。剩 1 個 leaked_password_protection（optional）+ 4 個 unused index（N3+ 才用）
 - ✅ **Chibi 招財貓**：GPT chroma-key 圖 → Python Pillow 兩段去背（fuzz 30%+40%）→ 256x256 PNG，`manekineko-floating.tsx` 🐱 emoji → `<Image>` + drop-shadow glow
-- ✅ **Sprint X.9 — N3 字源匯入**：yomitan-jlpt-vocab n3.csv（1730 字）→ 2 subagent 並行翻譯 → 012_n3_words_itsukushima.sql（865 字）+ 013_n3_words_izumo.sql（865 字）→ psycopg2 apply。**N5+N4+N3 共 2594 字 / 6 座神社**
+- ✅ **Sprint X.9 — N3 字源匯入**：1730 字 → itsukushima（865）+ izumo（865）→ 012+013 migration apply
+- ✅ **Sprint X.10 — N2 字源匯入**：1812 字 → kasuga（906）+ tsurugaoka（906）→ 014+015 migration apply
+- ✅ **Sprint X.11 — N1 字源匯入**：3427 字 → nikko（1713）+ ise（1714）→ 016+017 migration apply
+- **全 JLPT 完整：N5+N4+N3+N2+N1 共 8293 字 / 10 座神社**（yomitan-jlpt-vocab 全量）
 
 **進行中**：
 - ⏳ Cowork Chrome 驗 X.3：招財貓 30% 觸發 + 抽籤 modal + /omikuji 歷史 + 結算頁 60% 觸發

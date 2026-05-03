@@ -3,6 +3,54 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-03 23:06 — Sprint X.11 N1 字源匯入
+
+### 做了什麼
+
+- 下載 yomitan-jlpt-vocab n1.csv（3427 字）到 scripts/output/n1-raw.csv
+- 並行 spawn 4 個 subagent 翻譯（各 ~856 字：nikko_a/nikko_b/ise_a/ise_b）
+- 驗收：8 個遺漏字（ワット/ローマ字/ロマンチック/一息 + 4 個 polysemous）手動補齊
+- Python psycopg2 直連 DB 執行 016_n1_words_nikko.sql（1713 字）+ 017_n1_words_ise.sql（1714 字）
+- 全庫驗收：10 座神社、**8293 字** 全部就位
+- commit 7c82ffb：「feat(n1): Sprint X.11 — N1 字源匯入（nikko + ise）」push 到 origin/main
+
+### 技術決策
+
+- N1 規模大（3427 字）故分 4 段並行，每段 ~856 字
+- nikko = N1-basic（1713 字）、ise = N1-adv（1714 字）
+- 同 N3/N2 流程：psycopg2 直連 > MCP apply_migration（檔案太大）
+
+### 下次開工先做
+
+- Sprint X.3 遺留：招財貓動畫細化 + 神籤日期 reset
+- 階段 9：PWA manifest / service worker production 驗證
+- 域名 kamiwords.com 購買 + Vercel DNS 設定
+- 朋友試玩 beta
+
+---
+
+## 2026-05-03 22:45 — Sprint X.10 N2 字源匯入
+
+### 做了什麼
+
+- 下載 yomitan-jlpt-vocab n2.csv（1812 字）到 scripts/output/n2-raw.csv
+- 並行 spawn 2 個 subagent 翻譯（kasuga 906 字 + tsurugaoka 906 字）
+- 補齊遺漏：kasuga 缺 ゼミ（1075160）、tsurugaoka 缺 ワンピース/碗/日課（3 字），手動翻譯補齊
+- Python psycopg2 直連 DB 執行 014_n2_words_kasuga.sql（906 字）+ 015_n2_words_tsurugaoka.sql（906 字）
+- 驗收：kasuga 906 + tsurugaoka 906 字確認在 DB
+- N5+N4+N3+N2 共 4866 字 / 8 座神社
+
+### 技術決策
+
+- 同 N3 流程：2 subagent 並行翻 → JSON 驗收 → psycopg2 直連 apply
+- kasuga = N2-basic（906 字）、tsurugaoka = N2-adv（906 字）
+
+### 下次開工先做
+
+- Sprint X.11：N1 字源匯入（nikko ~1713 + ise ~1714，共 3427 字，分 4 段並行）
+
+---
+
 ## 2026-05-03 22:05 — Sprint X.9 N3 字源匯入
 
 ### 做了什麼
