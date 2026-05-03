@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-03 02:30 — Sprint X.3 神籤 + 招財貓上線
+**最後更新**：2026-05-03 21:09 — Advisor cleanup + chibi 招財貓 + Sprint X.8 Tokyo region
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -33,6 +33,9 @@
 - ✅ **Sprint X.6 — UX polish（Task 1-4）**：Q10 答對立即跳結算（handleChoice 直接 fire，不走 timer）、5 連勝 combo banner/音效/confetti 拔掉（comboCount state 保留供未來 stats）、saveVisitAction 平行化（Phase A：visit_answers + user_lanterns.select 同步、Phase C：completion check + streak 同步，~8→~5 round trips）、`/shrines` 卡片改 `/?shrine=slug` 路徑 + 首頁接 searchParams + `getInariShrine` 改 `getShrineBySlug(slug)` + unlock 防護（未解鎖 fallback inari）
 - ✅ **Sprint X.7 — `complete_visit` Postgres RPC**：`008_complete_visit_rpc.sql`（一次 1:1 還原 visit.ts + srs.ts + streak.ts，security invoker → 走 user RLS）、user_fox.stage constraint 1-5 → 1-9 順手修（schema 跟 TS code mismatch bug，第 5 次拿御朱印會 fail）、`saveVisitAction` 從 ~5 round trips 壓成 1 個 `supabase.rpc('complete_visit', ...)`、Tokyo Edge → Tokyo DB 預期 5-6s → ~1s
 - ✅ **Sprint X.3 — 神籤每日抽 + 招財貓**：`009_omikuji.sql`（omikuji_messages 100 條 seed 大吉 10/中吉 20/小吉 30/吉 25/凶 15、user_omikuji 表 + Tokyo timezone generated drawn_date + unique 每日 1 抽 hard limit、`draw_omikuji(p_shown_in)` RPC weighted random + on-conflict race protection、security invoker → user RLS）、`lib/omikuji.ts`（getTodayOmikuji + getOmikujiHistory）、`actions/omikuji.ts`（drawOmikujiAction）、`<OmikujiModal>` 卷軸 spring drop-in 動畫 + 5 等級配色、`<ManekinekoFloating>` 首頁右下 30% 出現 + bounce wiggle、`<OmikujiResultTrigger>` 結算頁 60% delayed 1.5s 自動彈、`/omikuji` 歷史頁（5 等級統計列 + 卡片列表）、首頁頂 nav 神籤連結
+- ✅ **Sprint X.8 — Tokyo region + /result 並行**：`vercel.json` regions: ["hnd1"]、function 從 iad1 → hnd1 同 region Supabase（RTT 250ms → ~5ms）、/result page 4 sequential queries → 3 RTT（auth → visits+shrines 並行 → user_lanterns）
+- ✅ **Advisor cleanup（010 + 011）**：`complete_visit`/`draw_omikuji` SET search_path、9 RLS policy 改 (select auth.uid())、9 FK covering index、`visit_answers` surrogate PK。剩 1 個 leaked_password_protection（optional）+ 4 個 unused index（N3+ 才用）
+- ✅ **Chibi 招財貓**：GPT chroma-key 圖 → Python Pillow 兩段去背（fuzz 30%+40%）→ 256x256 PNG，`manekineko-floating.tsx` 🐱 emoji → `<Image>` + drop-shadow glow
 
 **進行中**：
 - ⏳ Cowork Chrome 驗 X.3：招財貓 30% 觸發 + 抽籤 modal + /omikuji 歷史 + 結算頁 60% 觸發

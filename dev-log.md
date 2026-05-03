@@ -3,6 +3,40 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-03 21:09 — Advisor cleanup + chibi 招財貓 + Sprint X.8 Tokyo region
+
+### 做了什麼
+
+**Sprint X.8 — Vercel Tokyo region + /result 並行（已 push 8c5849c）**
+- `vercel.json` 新增 `regions: ["hnd1"]`，Vercel function 從 iad1（US East）移到 Tokyo，RTT 250ms → ~5ms
+- `/result` page 4 sequential queries 改 3 RTT：auth → [visits + shrines 並行] → user_lanterns
+- 預期 Q10 → 結算頁 5-6s → ~500ms
+
+**Advisor cleanup（010 + 011，5a4887c）**
+- `010_advisor_cleanup.sql`：`complete_visit` + `draw_omikuji` 加 `SET search_path = ''`（function_search_path_mutable WARN）；9 個 RLS policy 改 `(select auth.uid())`（auth_rls_initplan WARN）
+- `011_indexes_and_pk.sql`：9 個 unindexed FK 加 covering index；`visit_answers` 加 surrogate uuid PK
+- 兩個 migration 已 Cowork 端直接 apply 到 production，repo 只是同步記錄
+- Supabase advisor：12 WARN + 14 INFO → 1 個（leaked_password_protection，optional dashboard 設定）+ 4 個 unused index（N3+ 才用）
+
+**Chibi 招財貓 PNG（74994f9）**
+- XunC 提供 GPT chroma-key 圖（`.bg-bak/maneki-raw.png`，#00FF00 綠底 1024x1024）
+- 用 Python Pillow 兩段去背：fuzz 30% Pass1 → fuzz 40% Pass2（殘綠 4895→109 px），4 角 alpha=0 驗證通過
+- resize 256x256，存 `app/public/art/maneki-neko.png`
+- `manekineko-floating.tsx` 🐱 emoji 換成 `<Image src="/art/maneki-neko.png">` + drop-shadow glow
+
+### 卡在哪 / 待決定
+
+- ImageMagick 未安裝在 Windows PATH，改用 Python Pillow + numpy 完成去背（效果等同 fuzz transparent）
+- 招財貓圖 Pass2 後仍有 1371 px avg RGB [72,77,55]（橄欖褐），判斷是貓身自然陰影非綠邊，不繼續 fuzz
+
+### 下次開工先做
+
+- XunC 手機跑完整 visit 10 題，量 Q10 → 結算頁時間（驗 X.8 Tokyo region 效果）
+- Advisor backlog：supabase advisor 剩 leaked_password_protection（dashboard 開）
+- Sprint X.3 結算頁 60% omikuji trigger 實機驗（要完整 visit flow）
+
+---
+
 ## 2026-05-03 03:10 — Sprint X.3 production hotfix（009b + 009c）
 
 ### 做了什麼
