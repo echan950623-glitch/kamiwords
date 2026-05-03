@@ -3,6 +3,43 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-03 03:10 — Sprint X.3 production hotfix（009b + 009c）
+
+### 做了什麼
+
+Cowork Chrome 驗 X.3 撈出兩個 production bug，原地修：
+
+**Bug 1：`column uo.message_id does not exist`（009b 修）**
+- root cause：`001_initial_schema.sql` 已建過 `user_omikuji`（舊欄位 user_id / drawn_at / result / reward）。我的 009 用 `create table if not exists` → 沒覆蓋舊表 → 新 RPC 抓不到 message_id 欄位
+- 修法：`009b_user_omikuji_rebuild.sql` drop 舊表 cascade（policy 一起刪）+ 重建 X.3 schema。production 舊表 0 筆資料，無遺失
+- supabase advisor 一開始就警告 user_omikuji 有「multiple permissive policies」（我新建的 + 001 舊的），就是這個 bug 的線索
+
+**Bug 2：`column reference "level" is ambiguous`（009c 修）**
+- root cause：RPC return table 宣告了 `level text`，內部 query `where level = v_level` 沒寫 alias → PG 不知道指哪個
+- 修法：`009c_draw_omikuji_alias_fix.sql` 把所有 query 加 table alias（`where om.level = v_level`）+ 順手在所有 table 前加 `public.` schema 前綴防 search_path mutable warning（advisor 也警告了）
+
+**驗證**
+- 直接 SQL 模擬 user 呼叫 RPC：成功抽到「吉」+「禍を転じて福と為す、失敗も糧に。」
+- Chrome 重整首頁：招財貓正常 spawn（30% 機率）+ button label 正確切換「抽神籤」/「查看今日神籤」
+- 點招財貓 → OmikujiModal 跳出，顯示等級色（吉=淡藍）+ 日諺 + 中翻 + 💡 hint
+- `/omikuji` 歷史頁：5 等級統計列（大吉 0/中吉 0/小吉 0/吉 1/凶 0）+ 卡片完整顯示
+
+**沒驗到（用 SQL 已確認 RPC 路徑通）**
+- 結算頁 60% trigger（要走完整 10 題 visit flow，code 路徑跟 manekineko 共用同一 RPC + 同一 modal，已間接驗證）
+- X.7 saveVisit 5-6s → 1s 速度（要走完整 visit flow，server-side complete_visit RPC 已從 SQL 確認運作）
+
+### 卡在哪 / 待決定
+
+- 沒卡。Chrome ref click 偶爾沒 fire onClick — 用 `btns[0].click()` JS 直接觸發解決。
+
+### 下次開工先做
+
+- 推 009b + 009c migration 進 git（production 已直接 apply）
+- 朋友手機驗實際 visit flow：跑 10 題量 saveVisit 速度 + 結算頁 60% omikuji trigger
+- 修 supabase advisor 警告：function search_path mutable（009c 已部分修）、RLS auth.uid() 改 (select auth.uid())
+
+---
+
 ## 2026-05-03 02:30 — Sprint X.3 神籤每日抽 + 招財貓功能化
 
 ### 做了什麼
