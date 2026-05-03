@@ -2,9 +2,11 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { isShrineUnlocked } from '@/lib/shrines'
+import { getTodayOmikuji } from '@/lib/omikuji'
 import { SignOutButton } from '@/components/auth/sign-out-button'
 import { LanternGrid, type LanternStatus, type LanternItem } from '@/components/shrine/lantern-grid'
 import { Fox } from '@/components/shrine/fox'
+import { ManekinekoFloating } from '@/components/omikuji/manekineko-floating'
 
 export const dynamic = 'force-dynamic'
 
@@ -308,14 +310,15 @@ export default async function HomePage({
 
   const shrine = await getShrineBySlug(activeSlug)
 
-  const [lanternStats, todayProgress, streak, foxStage] = shrine
+  const [lanternStats, todayProgress, streak, foxStage, todayOmikuji] = shrine
     ? await Promise.all([
         getLanternStats(shrine.id, user.id),
         getTodayProgress(user.id),
         getUserStreak(user.id),
         getUserFoxStage(user.id),
+        getTodayOmikuji(supabase, user.id),
       ])
-    : [null, null, null, 1]
+    : [null, null, null, 1, null]
 
   const userEmail = user.email ?? ''
   const displayName = user.user_metadata?.full_name ?? userEmail.split('@')[0]
@@ -347,7 +350,7 @@ export default async function HomePage({
           <span className="hidden sm:inline text-stone-400 truncate max-w-[120px]">
             {displayName}
           </span>
-          <button className="hover:text-stone-100 transition-colors">神籤 🎴</button>
+          <Link href="/omikuji" className="hover:text-stone-100 transition-colors">神籤 🎴</Link>
           <button className="hover:text-stone-100 transition-colors">御朱印帳 📖</button>
           <SignOutButton />
         </div>
@@ -447,6 +450,9 @@ export default async function HomePage({
           <ErrorState />
         )}
       </section>
+
+      {/* 招財貓浮動（30% 機率出現，純 client roll） */}
+      <ManekinekoFloating todayAlreadyDrawn={!!todayOmikuji} />
 
       {/* Bottom tab */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-20 flex items-center justify-around px-4 py-3 bg-stone-900/95 border-t border-stone-800 backdrop-blur-sm">

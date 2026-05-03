@@ -3,6 +3,54 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-03 02:30 — Sprint X.3 神籤每日抽 + 招財貓功能化
+
+### 做了什麼
+
+XunC 選 X.3 推進。先用 AskUserQuestion 跟用戶確認 4 個關鍵決策（傳統籤詩 / 存 DB / 招財貓首頁 30%+結算頁 60% / 傳統比例），然後 plan + 一次做完整個 sprint。
+
+**Plan**：`docs/superpowers/plans/2026-05-03-sprint-x-3-omikuji.md`
+
+**Phase A — DB（009 migration，agent 跑）**
+- 表 schema：`omikuji_messages`（master 表，level/jp/zh/hint）+ `user_omikuji`（user 抽過的籤）
+- 關鍵設計：`drawn_date` 用 Postgres generated column `((drawn_at at time zone 'Asia/Tokyo')::date) stored` → 處理台灣 user 半夜跨日問題
+- `unique (user_id, drawn_date)` 是 DB 層 hard limit，每日 1 抽
+- RLS：messages 公開 read、user_omikuji 只能看自己
+- Seed 100 條籤詩，按 user 確認的傳統比例 大吉 10 / 中吉 20 / 小吉 30 / 吉 25 / 凶 15。內容混實際日本諺語（七転び八起き、千里の道も一歩から、雨降って地固まる、三人寄れば文殊の知恵、石の上にも三年、急がば回れ、聞くは一時の恥、能ある鷹は爪を隠す、覆水盆に返らず、禍福はあざなえる縄の如し 等近 30 個傳統諺語）+ 學習脈絡 hint（大吉熱血、凶安慰）。每條 jp/zh/hint 獨立不重複
+- RPC `draw_omikuji(p_shown_in text)` returns table(already_drawn, level, message_jp, message_zh, hint, drawn_at)：先查 today 已抽 → 否則 weighted random 抽 level（0.10/0.30/0.60/0.85 cumulative）→ 該 level 內 random 1 條 → `insert ... on conflict (user_id, drawn_date) do nothing returning` → race fallback 重查
+- `security invoker` → 走 user 自己的 RLS
+- Apply 後驗證：`select level, count(*) from omikuji_messages group by level` → 10/20/30/25/15 完全符合
+
+**Phase B — Backend（claude）**
+- `app/src/lib/omikuji.ts`：getTodayOmikuji / getOmikujiHistory + LEVEL_COLOR / LEVEL_SLUG mapping
+- `app/src/actions/omikuji.ts`：drawOmikujiAction(shownIn) → `supabase.rpc('draw_omikuji', ...)` 包 try-catch 回構化 log
+
+**Phase C — UI（claude）**
+- `<OmikujiModal>` 卷軸樣式：頂底 棕軸 + 米黃漸層卷軸體 + 等級色色帶 + 大字 level + 日文諺語 + 中文翻譯 + 學習提示 hint + spring drop-in 動畫 + 點背景關閉
+- `<ManekinekoFloating>` 首頁右下浮動：mount 時 `Math.random() < 0.3` roll 一次決定要不要顯示，0.5s 後手部 bounce 提示，點擊 trigger drawOmikujiAction('manekineko') → 開 modal，關完 1s 後自動收掉
+- `<OmikujiResultTrigger>` 結算頁 60% 機率延遲 1.5s 自動抽，用 useRef rolledRef 防 React 18 strict mode double-mount race
+- `/omikuji` 歷史頁：頂 nav + 5 等級統計列 + 卡片列表（同卷軸風格 mini 版） + empty state
+
+**Phase D — 整合**
+- 首頁 `page.tsx`：import `getTodayOmikuji` + `ManekinekoFloating`，Promise.all 多預載一個 todayOmikuji，把 `todayAlreadyDrawn={!!todayOmikuji}` 傳給招財貓元件，頂 nav 「神籤 🎴」按鈕改成 Link to `/omikuji`
+- 結算頁 `result-ceremony-wrapper.tsx`：加 `ceremonyDone` state，ceremony 跑完才 enable OmikujiResultTrigger（避免 60% modal 跟御朱印 ceremony 同時彈）
+
+**沒做**（後續 sprint）
+- 招財貓 chibi PNG（暫用 🐱 emoji + 紅圓背景）
+- 卷軸真實貼圖背景（暫用 CSS 漸層 + 棕軸）
+
+### 卡在哪 / 待決定
+
+- 沒卡。push 上 Vercel 後 user 自驗。
+
+### 下次開工先做
+
+- Cowork Chrome 驗 X.3：reload 首頁多次確認 30% 出現率（roll 不對等 user 體感不準）、抽到籤確認等級色 + 日文 + hint 都對、再 reload 看「已抽」狀態、進結算頁多跑幾次看 60% 觸發
+- 視 user 體感調整 spawnRate / triggerRate
+- 招財貓 chibi PNG（GPT 產一張，紅圍兜 + 舉手）替掉 🐱
+
+---
+
 ## 2026-05-03 00:15 — Sprint X.7 `complete_visit` RPC 上線
 
 ### 做了什麼
