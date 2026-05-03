@@ -3,6 +3,31 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-03 22:05 — Sprint X.9 N3 字源匯入
+
+### 做了什麼
+
+- 確認 DB 已有 10 座神社（N3: itsukushima/izumo, N2: kasuga/tsurugaoka, N1: nikko/ise），unlock chain 已設好
+- 下載 yomitan-jlpt-vocab n3.csv（1730 字）到 scripts/output/n3-raw.csv
+- 並行 spawn 2 個 subagent 翻譯（itsukushima 865 字 + izumo 865 字），用繁體中文口語風格
+- 補齊 3 個 subagent 遺漏的字（スタンド/我々/湾）
+- Python psycopg2 直連 DB 執行 012 + 013 migration（各 865 words + shrine_words）
+- 驗收：itsukushima 865 + izumo 865 字確認在 DB
+- N5+N4+N3 共 2594 字 / 6 座神社
+
+### 技術決策
+
+- 不需要 ANTHROPIC_API_KEY：直接 spawn subagent 翻譯（subagent 本身就是 Claude）
+- 翻譯 JSON 存 scripts/output（gitignored），只 commit script + SQL
+- SQL 太大無法走 MCP apply_migration（62K tokens），改用 psycopg2 直連
+
+### 下次開工先做
+
+- Sprint X.10：N2 字源匯入（kasuga 320 + tsurugaoka 320，共 ~1800 字，同流程）
+- Sprint X.11：N1 字源匯入（nikko ~1750 + ise ~1750，共 ~3500 字）
+
+---
+
 ## 2026-05-03 21:09 — Advisor cleanup + chibi 招財貓 + Sprint X.8 Tokyo region
 
 ### 做了什麼
