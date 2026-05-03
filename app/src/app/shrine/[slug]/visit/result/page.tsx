@@ -34,48 +34,18 @@ export default async function ResultPage({
     const parsedFoxStage = searchParams.foxStage ? parseInt(searchParams.foxStage, 10) : null
     const newFoxStage = parsedFoxStage !== null && !isNaN(parsedFoxStage) ? parsedFoxStage : null
 
-    let correct = 0
-    let total = 0
-
-    // 優先從 DB 讀，避免 client 計數不準的 bug
-    if (searchParams.visitId && !hasSaveError) {
-      const visitResult = await supabase
-        .from('visits')
-        .select('correct_count, total_questions')
-        .eq('id', searchParams.visitId)
-        .eq('user_id', user.id)
-        .single()
-
-      if (visitResult.error) {
-        console.error('【ResultPage】讀取 visit 失敗:', {
-          message: visitResult.error.message,
-          visitId: searchParams.visitId,
-          timestamp: new Date().toISOString(),
-        })
-      } else if (visitResult.data) {
-        correct = visitResult.data.correct_count
-        total = visitResult.data.total_questions
-      }
-    } else {
-      // fallback：save_failed 時從 URL 取 client 計算值
-      const correctStr = Array.isArray(searchParams.correct)
-        ? searchParams.correct[0]
-        : searchParams.correct
-      const totalStr = Array.isArray(searchParams.total)
-        ? searchParams.total[0]
-        : searchParams.total
-      correct = parseInt(correctStr ?? '0', 10)
-      total = parseInt(totalStr ?? '0', 10)
-    }
-
-    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
-
-    // 抓神社資料
-    const shrineResult = await supabase
-      .from('shrines')
-      .select('id, name_jp, theme_color')
-      .eq('slug', params.slug)
-      .single()
+    // Phase 2：visits + shrines 並行（都只需要 user.id / params.slug，互不依賴）
+    const [visitResult, shrineResult] = await Promise.all([
+      searchParams.visitId && !hasSaveError
+        ? supabase
+            .from('visits')
+            .select('correct_count, total_questions')
+            .eq('id', searchParams.visitId)
+            .eq('user_id', user.id)
+            .single()
+        : Promise.resolve({ data: null, error: null }),
+      supabase.from('shrines').select('id, name_jp, theme_color').eq('slug', params.slug).single(),
+    ])
 
     if (shrineResult.error || !shrineResult.data) {
       console.error('【ResultPage】抓神社失敗:', {
@@ -88,7 +58,33 @@ export default async function ResultPage({
 
     const shrine = shrineResult.data
 
-    // 計算已點亮燈籠數
+    let correct = 0
+    let total = 0
+
+    if (visitResult.data) {
+      correct = visitResult.data.correct_count
+      total = visitResult.data.total_questions
+    } else if (hasSaveError || !searchParams.visitId) {
+      // fallback：save_failed 時從 URL 取 client 計算值
+      const correctStr = Array.isArray(searchParams.correct)
+        ? searchParams.correct[0]
+        : searchParams.correct
+      const totalStr = Array.isArray(searchParams.total)
+        ? searchParams.total[0]
+        : searchParams.total
+      correct = parseInt(correctStr ?? '0', 10)
+      total = parseInt(totalStr ?? '0', 10)
+    } else if (visitResult.error) {
+      console.error('【ResultPage】讀取 visit 失敗:', {
+        message: visitResult.error.message,
+        visitId: searchParams.visitId,
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
+
+    // Phase 3：user_lanterns（需要 shrine.id，必須在 shrineResult 後）
     const litResult = await supabase
       .from('user_lanterns')
       .select('*', { count: 'exact', head: true })
