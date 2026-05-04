@@ -459,8 +459,8 @@ export default async function HomePage({
         {[
           { icon: '⛩', label: '神社', href: '/shrines' },
           { icon: '⚔️', label: '練習', href: '/shrines?mode=practice' },
-          { icon: '🎎', label: '御守袋', href: null },
-          { icon: '👤', label: '我的', href: null },
+          { icon: '🎎', label: '御守袋', href: '/goshuin' },
+          { icon: '👤', label: '我的', href: '/me' },
         ].map(({ icon, label, href }) => {
           const inner = (
             <>

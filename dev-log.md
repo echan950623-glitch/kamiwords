@@ -3,6 +3,44 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-04 22:44 — Sprint X.14 御守袋 + 我的頁面
+
+### 做了什麼
+
+- **lib/goshuin.ts（新）**：`getShrinesWithGoshuinStatus(supabase, userId)` — 並行抓 shrines + user_goshuin，Promise.allSettled 跑 10 個 word_count query，回傳含 is_earned + earned_at 的完整列表
+- **lib/profile.ts（新）**：`getUserStats` — Promise.allSettled 並行 8 個 query（user_fox、user_streak、mastered count、goshuin count、正式/練習 visits count、total/correct answers count，total_words 硬編 8293）；`getRecentVisits` — visits join shrines nested select，降序取最近 5 場
+- **app/goshuin/page.tsx（新）**：御朱印帳頁面；頂部「X / 10 御朱印」amber 大字 + 進度條 + mastered 副字；10 神社卡片（已取得：theme_color 左邊框 4px + goshuin-stamp.png 右上角 drop-shadow；未取得：opacity-40 + dashed 佔位框 + 「未取得」）；底部 footer 連 /omikuji + /me
+- **app/me/page.tsx（新）**：個人戰績頁面；user info card（頭像/名稱/email/加入日期）；fox stage 卡（160x160 Image + Stage N/9 + 下一神社提示）；2x2 統計格（streak/mastered/goshuin/visits）；答題正確率 bar；最近 5 場 visit 列表（連 /result?visitId）；紅色登出大鈕
+- **app/me/LogOutButton.tsx（新）**：'use client'，同 SignOutButton 邏輯但紅色大按鈕樣式
+- **首頁底 nav**：御守袋 href null → `/goshuin`；我的 href null → `/me`（兩個同時 enabled）
+- **migration 011b_shrine_theme_color_polish.sql**：記錄 kasuga + nikko theme_color 更新（production 已直接套）
+
+### 卡在哪 / 待決定
+
+- visit_answers 的 total/correct count 用 nested filter（`.eq('visits.user_id', userId)`）；若 production 查詢出現意外，可改成先抓 visit IDs 再 count
+- Fox 在 /me 頁用 Next Image 直接 160x160（不走 Fox 元件）以確保一致尺寸
+
+### 下次開工先做
+
+- XunC Chrome 驗收：底 nav → /goshuin（確認 4 個御朱印顯示）→ /me（確認 fox stage + stats）
+- 驗收後考慮 PWA manifest 驗證（階段 9）或域名購買
+
+## 2026-05-04 21:30 — Sprint X.13 hotfix：visit nested select + theme_color
+
+### 做了什麼
+
+- **visit/page.tsx**：移除 `wordsResult = supabase.from('words').in('id', wordIds)` 獨立 query；改用 `shrine_words.select('word_id, position, words(id, lemma, meaning_zh, meta)')` nested select（server-side inner join，無 URL query string）；新增 `SwRow` 型別 + `as unknown as SwRow[]` 雙重 cast（Supabase 無 generated types 時把 nested join 推成 array 型別）
+- **Root cause**：Supabase REST `.in('id', [...865+ UUIDs])` 走 GET request，URL 超 ~8KB 限制 → query 失敗 → redirect('/')；X.12 practice mode 跳過 unlock gate 才把 bug 暴露給 N3+ 神社
+- **migration 011b**：kasuga theme_color #6B4423 → #D9534F；nikko #1C1410 → #E8B547（原色在 bg-stone-950 黑底幾乎不可見）
+
+### 卡在哪 / 待決定
+
+- 無
+
+### 下次開工先做
+
+- Production 驗證：/shrine/ise/visit?practice=1（N1 1714 字）應成功進題目頁（原本直接 redirect /）
+
 ## 2026-05-04 12:40 — Sprint X.12 自由練習 + 題目回報
 
 ### 做了什麼
