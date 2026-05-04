@@ -22,6 +22,7 @@ interface VisitClientProps {
   questions: Question[]
   newWordsCount: number
   reviewWordsCount: number
+  isPractice?: boolean
 }
 
 export function VisitClient({
@@ -29,6 +30,7 @@ export function VisitClient({
   questions,
   newWordsCount,
   reviewWordsCount,
+  isPractice = false,
 }: VisitClientProps) {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -84,12 +86,14 @@ export function VisitClient({
         answers: allAnswers,
         new_words_count: newWordsCount,
         review_words_count: reviewWordsCount,
+        is_practice: isPractice,
       })
 
       let resultUrl = `/shrine/${shrine.slug}/visit/result?visitId=${visitId}`
       if (isGoshuinEarned) resultUrl += '&goshuin=1'
       if (newFoxStage !== null) resultUrl += `&foxStage=${newFoxStage}`
       if (currentStreak > 0) resultUrl += `&streak=${currentStreak}`
+      if (isPractice) resultUrl += '&practice=1'
       router.replace(resultUrl)
     } catch (error) {
       console.error('【VisitClient】儲存失敗:', {
@@ -103,7 +107,7 @@ export function VisitClient({
     } finally {
       setIsSaving(false)
     }
-  }, [isLast, questions.length, shrine, newWordsCount, reviewWordsCount, router])
+  }, [isLast, questions.length, shrine, newWordsCount, reviewWordsCount, isPractice, router])
 
   return (
     <main className="flex flex-col items-center min-h-screen pb-24">
@@ -118,7 +122,7 @@ export function VisitClient({
         <span className="text-base font-bold" style={{ color: shrine.theme_color }}>
           {shrine.name_jp}
         </span>
-        <span className="text-xs text-stone-600">今日參拜</span>
+        <span className="text-xs text-stone-600">{isPractice ? '自由練習' : '今日參拜'}</span>
       </nav>
 
       <div className="w-full max-w-sm px-4">

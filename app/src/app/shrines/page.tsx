@@ -5,7 +5,11 @@ import { getShrinesWithUnlockStatus } from '@/lib/shrines'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ShrinesPage() {
+export default async function ShrinesPage({
+  searchParams,
+}: {
+  searchParams: { mode?: string }
+}) {
   try {
     const supabase = await createClient()
     const {
@@ -13,6 +17,8 @@ export default async function ShrinesPage() {
     } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
+
+    const isPractice = searchParams.mode === 'practice'
 
     const shrines = await getShrinesWithUnlockStatus(user.id)
 
@@ -28,7 +34,7 @@ export default async function ShrinesPage() {
               ← 返回
             </Link>
             <span className="font-pixel text-base font-bold tracking-widest text-stone-100">
-              ⛩ 神社一覽
+              {isPractice ? '⚔️ 自由練習' : '⛩ 神社一覽'}
             </span>
             <span className="w-12" />
           </nav>
@@ -38,7 +44,7 @@ export default async function ShrinesPage() {
             {shrines.map(shrine => {
               const isInactive = shrine.word_count === 0
               const isLocked = !shrine.is_unlocked
-              const disabled = isInactive || isLocked
+              const disabled = isInactive || (!isPractice && isLocked)
 
               const card = (
                 <article
@@ -70,6 +76,9 @@ export default async function ShrinesPage() {
                             ✓ 已完成
                           </span>
                         )}
+                        {isPractice && !isLocked && (
+                          <span className="font-pixel text-[10px] text-amber-500 border border-amber-700/50 rounded px-1">練習</span>
+                        )}
                       </div>
                       <span className="font-pixel text-xs text-stone-500">
                         {shrine.level} ・ {shrine.word_count} 字
@@ -79,7 +88,7 @@ export default async function ShrinesPage() {
                     <div className="text-right">
                       {isInactive ? (
                         <span className="font-pixel text-xs text-stone-600">即將開放</span>
-                      ) : isLocked ? (
+                      ) : !isPractice && isLocked ? (
                         <div className="flex flex-col items-end gap-0.5">
                           <span className="text-xl">🔒</span>
                           <span className="font-pixel text-[10px] text-stone-500">
@@ -87,7 +96,7 @@ export default async function ShrinesPage() {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-2xl">⛩</span>
+                        <span className="text-2xl">{isPractice ? '⚔️' : '⛩'}</span>
                       )}
                     </div>
                   </div>
@@ -97,7 +106,7 @@ export default async function ShrinesPage() {
               return disabled ? (
                 <div key={shrine.id}>{card}</div>
               ) : (
-                <Link key={shrine.id} href={`/?shrine=${shrine.slug}`}>
+                <Link key={shrine.id} href={isPractice ? `/shrine/${shrine.slug}/visit?practice=1` : `/?shrine=${shrine.slug}`}>
                   {card}
                 </Link>
               )
