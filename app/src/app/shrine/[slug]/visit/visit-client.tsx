@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { QuestionCard } from '@/components/shrine/question-card'
+import { VisitSavingOverlay } from '@/components/shrine/visit-saving-overlay'
 import { saveVisitAction } from '@/actions/visit'
 import { preloadSfx } from '@/lib/sfx'
 import { preloadConfetti } from '@/components/shrine/confetti'
@@ -126,26 +127,21 @@ export function VisitClient({
       </nav>
 
       <div className="w-full max-w-sm px-4">
-        {isSaving ? (
-          <div className="flex flex-col items-center gap-4 mt-24">
-            <span className="text-4xl animate-spin">⛩</span>
-            <p className="text-stone-400 text-sm">計算結果中...</p>
-          </div>
-        ) : (
-          <AnimatePresence mode="wait">
-            <QuestionCard
-              key={currentIndex}
-              question={currentQuestion}
-              current={currentIndex + 1}
-              total={questions.length}
-              onAnswer={handleAnswer}
-              onNext={handleNext}
-              isLast={isLast}
-              wordId={currentQuestion.word.id}
-            />
-          </AnimatePresence>
-        )}
+        <AnimatePresence mode="wait">
+          <QuestionCard
+            key={currentIndex}
+            question={currentQuestion}
+            current={currentIndex + 1}
+            total={questions.length}
+            onAnswer={handleAnswer}
+            onNext={handleNext}
+            isLast={isLast}
+            wordId={currentQuestion.word.id}
+          />
+        </AnimatePresence>
       </div>
+
+      {isSaving && <VisitSavingOverlay />}
     </main>
   )
 }
