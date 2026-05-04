@@ -118,7 +118,7 @@ export function QuestionCard({
       </div>
 
       {/* 問題文字 */}
-      <p className="text-xs text-stone-500 text-center tracking-wide">
+      <p className="font-pixel text-base text-amber-300 text-center tracking-wider font-semibold mt-1 mb-1">
         {question.prompt}
       </p>
 
