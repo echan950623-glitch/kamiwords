@@ -141,6 +141,7 @@ export function VisitClient({
               onAnswer={handleAnswer}
               onNext={handleNext}
               isLast={isLast}
+              wordId={currentQuestion.word.id}
             />
           </AnimatePresence>
         )}
