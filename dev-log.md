@@ -3,6 +3,30 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-04 12:40 — Sprint X.12 自由練習 + 題目回報
+
+### 做了什麼
+
+- **DB（018_practice_and_feedback.sql）**：`complete_visit` RPC 加 `p_is_practice boolean default false` 第 5 參數（practice=true 跳過 SRS/goshuin/fox/streak 更新，只讀 streak 供回傳）；`visits.is_practice boolean default false` column；`word_feedback` 表（reason check: translation/kana/pos/other + RLS insert+select policy）
+- **Backend**：`actions/visit.ts` 加 `is_practice?: boolean` 到 `SaveVisitPayload`，RPC 呼叫傳第 5 參數；新建 `actions/feedback.ts` → `reportWordFeedbackAction`
+- **首頁（C1）**：底 nav「⚔️ 挑戰」→「⚔️ 練習」enable，連 `/shrines?mode=practice`；主內容「自由練習」按鈕 enable 同 url
+- **神社一覽（C2）**：接 `?mode=practice`，practice mode 下鎖定神社也可練習（is_active 仍篩）、卡片連 `/shrine/[slug]/visit?practice=1`、標題改「⚔️ 自由練習」、練習標籤
+- **Visit page（C3）**：接 `?practice=1`，practice mode 跳過 unlock gate；sessionWords 改為隨機打亂 allWords 取前 10（不依 SRS）
+- **Visit client（C4）**：接 `isPractice` prop，傳 `is_practice` 給 `saveVisitAction`，result URL 帶 `&practice=1`，header 顯示「自由練習」
+- **FeedbackModal（C5a）**：新元件，bottom-sheet Framer Motion spring 動畫，4 quick reason + 其他（textarea）+ 關閉，重置狀態 useEffect；`actions/feedback` 呼叫後 800ms 自動關
+- **QuestionCard（C5b）**：右上角 ⚠️ 絕對定位按鈕，開 FeedbackModal，傳 wordId
+- **Result page（C6）**：接 `?practice=1`，practice mode 隱藏 streak/燈籠數/御朱印，按鈕改「再練一場 ⚔️」+ 回首頁，不觸發 ceremony
+
+### 卡在哪 / 待決定
+
+- FeedbackModal state re-open reset bug — 已在 spec review 後立刻修復（useEffect on isOpen）
+- 舊 4-param `complete_visit` overload 保留（Postgres function overloading），Phase B 顯式傳 5 params 已正確 route 到新 overload
+
+### 下次開工先做
+
+- Vercel deploy 完成後，XunC Chrome 驗收：首頁「⚔️ 練習」→ 神社選擇（N1 ise 可直接練）→ 答題 10 題 → 結算（練習版，無 streak/燈籠）→ 回報 ⚠️ 幾題 → 從 Supabase Dashboard 跑 word_feedback SQL 確認回報進來
+- 驗收後可考慮 Sprint X.3 遺留（招財貓動畫細化）或 PWA manifest 驗證
+
 ## 2026-05-03 23:06 — Sprint X.11 N1 字源匯入
 
 ### 做了什麼
