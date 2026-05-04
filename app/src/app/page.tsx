@@ -438,12 +438,12 @@ export default async function HomePage({
               >
                 今日參拜 🙏
               </Link>
-              <button
-                disabled
-                className="w-full h-12 font-pixel text-base font-semibold rounded-xl border border-stone-700 bg-black/40 text-stone-500 cursor-not-allowed"
+              <Link
+                href="/shrines?mode=practice"
+                className="w-full h-12 flex items-center justify-center font-pixel text-base font-semibold rounded-xl border border-amber-700/60 bg-amber-950/30 text-amber-400 hover:bg-amber-950/50 transition-colors active:scale-95"
               >
-                自由練習 ⚔️（即將開放）
-              </button>
+                自由練習 ⚔️
+              </Link>
             </div>
           </>
         ) : (
@@ -458,7 +458,7 @@ export default async function HomePage({
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-20 flex items-center justify-around px-4 py-3 bg-stone-900/95 border-t border-stone-800 backdrop-blur-sm">
         {[
           { icon: '⛩', label: '神社', href: '/shrines' },
-          { icon: '⚔️', label: '挑戰', href: null },
+          { icon: '⚔️', label: '練習', href: '/shrines?mode=practice' },
           { icon: '🎎', label: '御守袋', href: null },
           { icon: '👤', label: '我的', href: null },
         ].map(({ icon, label, href }) => {

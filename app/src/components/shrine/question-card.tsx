@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { Question } from '@/lib/question'
 import { play } from '@/lib/sfx'
 import { celebrate } from '@/components/shrine/confetti'
+import { FeedbackModal } from './feedback-modal'
 
 interface QuestionCardProps {
   question: Question
@@ -13,6 +14,7 @@ interface QuestionCardProps {
   onAnswer: (choiceIndex: number, msTaken: number) => void
   onNext: () => void
   isLast: boolean
+  wordId: string
 }
 
 export function QuestionCard({
@@ -22,12 +24,14 @@ export function QuestionCard({
   onAnswer,
   onNext,
   isLast,
+  wordId,
 }: QuestionCardProps) {
   const [selected, setSelected] = useState<number | null>(null)
   const startTimeRef = useRef(Date.now())
   const [isNextFired, setIsNextFired] = useState(false)
   const nextFiredRef = useRef(false)
   const onNextRef = useRef(onNext)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   useEffect(() => { onNextRef.current = onNext }, [onNext])
 
@@ -79,13 +83,24 @@ export function QuestionCard({
   }
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -24 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="flex flex-col gap-6 w-full"
+      className="relative flex flex-col gap-6 w-full"
     >
+      {/* ⚠️ 回報按鈕 */}
+      <button
+        type="button"
+        onClick={() => setFeedbackOpen(true)}
+        aria-label="回報這題有問題"
+        className="absolute top-0 right-0 text-stone-600 hover:text-amber-400 transition-colors text-lg leading-none"
+      >
+        ⚠️
+      </button>
+
       {/* 進度條 */}
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-stone-500">
@@ -187,5 +202,11 @@ export function QuestionCard({
         )}
       </AnimatePresence>
     </motion.div>
+    <FeedbackModal
+      wordId={wordId}
+      isOpen={feedbackOpen}
+      onClose={() => setFeedbackOpen(false)}
+    />
+    </>
   )
 }

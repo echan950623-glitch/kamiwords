@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-03 23:06 — Sprint X.9-X.11 全 JLPT 字源匯入完成（N3/N2/N1）
+**最後更新**：2026-05-04 12:40 — Sprint X.12 自由練習 + 題目回報功能完成
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -40,9 +40,11 @@
 - ✅ **Sprint X.10 — N2 字源匯入**：1812 字 → kasuga（906）+ tsurugaoka（906）→ 014+015 migration apply
 - ✅ **Sprint X.11 — N1 字源匯入**：3427 字 → nikko（1713）+ ise（1714）→ 016+017 migration apply
 - **全 JLPT 完整：N5+N4+N3+N2+N1 共 8293 字 / 10 座神社**（yomitan-jlpt-vocab 全量）
+- ✅ **Sprint X.12 — 自由練習 + 題目回報**：`018_practice_and_feedback.sql`（`complete_visit` 加 `p_is_practice` 參數、`visits.is_practice` column、`word_feedback` 表 + RLS）、首頁底 nav「⚔️ 練習」enable + 自由練習按鈕連 `/shrines?mode=practice`、`/shrines` practice mode（鎖定神社也可練、卡片連 `?practice=1`）、visit page 隨機選題（不依 SRS）、`<FeedbackModal>` 4 個 quick reason + textarea + 關閉重置狀態、question-card 右上角 ⚠️ 觸發 FeedbackModal、result page 練習版（隱藏 streak/燈籠，顯示「再練一場」）、全程不影響 SRS/streak/goshuin/fox
 
 **進行中**：
 - ⏳ Cowork Chrome 驗 X.3：招財貓 30% 觸發 + 抽籤 modal + /omikuji 歷史 + 結算頁 60% 觸發
+- ⏳ Cowork Chrome 驗 X.12：首頁「⚔️ 練習」→ 神社選擇 → 答題 → 結算（練習版）→ 回報 ⚠️
 
 **待做**：
 - 📋 階段 9：PWA manifest / service worker 在 production 驗證

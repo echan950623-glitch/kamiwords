@@ -18,6 +18,7 @@ export default async function ResultPage({
     goshuin?: string
     streak?: string
     foxStage?: string
+    practice?: string
   }
 }) {
   try {
@@ -33,6 +34,7 @@ export default async function ResultPage({
     const streakParam = parseInt(searchParams.streak ?? '0', 10)
     const parsedFoxStage = searchParams.foxStage ? parseInt(searchParams.foxStage, 10) : null
     const newFoxStage = parsedFoxStage !== null && !isNaN(parsedFoxStage) ? parsedFoxStage : null
+    const isPractice = searchParams.practice === '1'
 
     // Phase 2：visits + shrines 並行（都只需要 user.id / params.slug，互不依賴）
     const [visitResult, shrineResult] = await Promise.all([
@@ -85,27 +87,31 @@ export default async function ResultPage({
     const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
 
     // Phase 3：user_lanterns（需要 shrine.id，必須在 shrineResult 後）
-    const litResult = await supabase
-      .from('user_lanterns')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('shrine_id', shrine.id)
-      .eq('is_lit', true)
+    // 練習模式不查燈籠數，省一次 RTT
+    let litCount = 0
+    if (!isPractice) {
+      const litResult = await supabase
+        .from('user_lanterns')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('shrine_id', shrine.id)
+        .eq('is_lit', true)
 
-    if (litResult.error) {
-      console.error('【ResultPage】抓燈籠數失敗:', {
-        message: litResult.error.message,
-        timestamp: new Date().toISOString(),
-      })
+      if (litResult.error) {
+        console.error('【ResultPage】抓燈籠數失敗:', {
+          message: litResult.error.message,
+          timestamp: new Date().toISOString(),
+        })
+      }
+
+      litCount = litResult.count ?? 0
     }
-
-    const litCount = litResult.count ?? 0
 
     return (
       <ResultCeremonyWrapper
         shrineName={shrine.name_jp}
-        newFoxStage={newFoxStage}
-        goshuinEarned={isGoshuinEarned}
+        newFoxStage={isPractice ? null : newFoxStage}
+        goshuinEarned={isPractice ? false : isGoshuinEarned}
       >
         <div className="bg-black min-h-screen flex justify-center">
         <ResultConfetti fire={accuracy >= 80 || isGoshuinEarned} />
@@ -167,8 +173,8 @@ export default async function ResultPage({
               </div>
             )}
 
-            {/* Streak 通知（streak > 0 才顯示） */}
-            {streakParam > 0 && (
+            {/* Streak 通知（streak > 0 且非練習模式才顯示） */}
+            {streakParam > 0 && !isPractice && (
               <div className="w-full rounded-xl border border-orange-700/50 bg-orange-950/30 px-4 py-3 flex items-center gap-3">
                 <span className="text-2xl">🔥</span>
                 <div>
@@ -180,16 +186,18 @@ export default async function ResultPage({
               </div>
             )}
 
-            {/* 燈籠數 */}
-            <div className="w-full rounded-xl border border-stone-800 bg-stone-900/60 px-4 py-4 text-center">
-              <p className="font-pixel text-stone-400 text-sm">
-                神社已點亮{' '}
-                <span className="text-amber-400 font-semibold text-lg">
-                  {litCount}
-                </span>{' '}
-                盞燈籠 🏮
-              </p>
-            </div>
+            {/* 燈籠數（練習模式不顯示） */}
+            {!isPractice && (
+              <div className="w-full rounded-xl border border-stone-800 bg-stone-900/60 px-4 py-4 text-center">
+                <p className="font-pixel text-stone-400 text-sm">
+                  神社已點亮{' '}
+                  <span className="text-amber-400 font-semibold text-lg">
+                    {litCount}
+                  </span>{' '}
+                  盞燈籠 🏮
+                </p>
+              </div>
+            )}
 
             {hasSaveError && (
               <p className="font-pixel text-xs text-red-400 text-center">
@@ -199,19 +207,39 @@ export default async function ResultPage({
 
             {/* 行動按鈕 */}
             <div className="w-full flex flex-col gap-3">
-              <Link
-                href={`/shrine/${params.slug}/visit`}
-                className="w-full h-12 flex items-center justify-center rounded-xl font-pixel text-base font-semibold text-white transition-all active:scale-95"
-                style={{ backgroundColor: shrine.theme_color }}
-              >
-                繼續參拜 🙏
-              </Link>
-              <Link
-                href="/"
-                className="w-full h-12 flex items-center justify-center rounded-xl border border-stone-700 font-pixel text-stone-300 hover:bg-stone-800 text-base font-semibold transition-colors"
-              >
-                回首頁 ⛩
-              </Link>
+              {isPractice ? (
+                <>
+                  <Link
+                    href={`/shrine/${params.slug}/visit?practice=1`}
+                    className="w-full h-12 flex items-center justify-center rounded-xl font-pixel text-base font-semibold text-white transition-all active:scale-95"
+                    style={{ backgroundColor: shrine.theme_color }}
+                  >
+                    再練一場 ⚔️
+                  </Link>
+                  <Link
+                    href="/"
+                    className="w-full h-12 flex items-center justify-center rounded-xl border border-stone-700 font-pixel text-stone-300 hover:bg-stone-800 text-base font-semibold transition-colors"
+                  >
+                    回首頁 ⛩
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href={`/shrine/${params.slug}/visit`}
+                    className="w-full h-12 flex items-center justify-center rounded-xl font-pixel text-base font-semibold text-white transition-all active:scale-95"
+                    style={{ backgroundColor: shrine.theme_color }}
+                  >
+                    繼續參拜 🙏
+                  </Link>
+                  <Link
+                    href="/"
+                    className="w-full h-12 flex items-center justify-center rounded-xl border border-stone-700 font-pixel text-stone-300 hover:bg-stone-800 text-base font-semibold transition-colors"
+                  >
+                    回首頁 ⛩
+                  </Link>
+                </>
+              )}
             </div>
           </section>
         </main>

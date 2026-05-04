@@ -15,6 +15,7 @@ export interface SaveVisitPayload {
   answers: AnswerRecord[]
   new_words_count: number
   review_words_count: number
+  is_practice?: boolean
 }
 
 export interface SaveVisitResult {
@@ -56,6 +57,7 @@ export async function saveVisitAction(
         p_answers: payload.answers,
         p_new_words_count: payload.new_words_count,
         p_review_words_count: payload.review_words_count,
+        p_is_practice: payload.is_practice ?? false,
       })
       .returns<CompleteVisitRpcRow[]>()
 

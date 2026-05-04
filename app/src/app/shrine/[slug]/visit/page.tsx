@@ -10,8 +10,10 @@ const MAX_REVIEW = 5
 
 export default async function VisitPage({
   params,
+  searchParams,
 }: {
   params: { slug: string }
+  searchParams: { practice?: string }
 }) {
   try {
     const supabase = await createClient()
@@ -21,16 +23,20 @@ export default async function VisitPage({
 
     if (!user) redirect('/login')
 
-    // Unlock gate：沒解鎖直接踢回 /shrines
-    const { unlocked, blockedBy } = await isShrineUnlocked(params.slug, user.id)
-    if (!unlocked) {
-      console.warn('【VisitPage】shrine 未解鎖:', {
-        slug: params.slug,
-        blockedBy,
-        user_id: user.id,
-        timestamp: new Date().toISOString(),
-      })
-      redirect('/shrines')
+    const isPractice = searchParams.practice === '1'
+
+    if (!isPractice) {
+      // Unlock gate：沒解鎖直接踢回 /shrines
+      const { unlocked, blockedBy } = await isShrineUnlocked(params.slug, user.id)
+      if (!unlocked) {
+        console.warn('【VisitPage】shrine 未解鎖:', {
+          slug: params.slug,
+          blockedBy,
+          user_id: user.id,
+          timestamp: new Date().toISOString(),
+        })
+        redirect('/shrines')
+      }
     }
 
     // 抓神社
@@ -140,24 +146,7 @@ export default async function VisitPage({
       }
     }
 
-    // 選出本次 session 單字：最多 5 個複習 + 補滿新字，合計最多 10 個
-    const sessionWords: QuizWord[] = []
-
-    for (const w of reviewDueWords.slice(0, MAX_REVIEW)) {
-      sessionWords.push(w)
-    }
-
-    const newSlots = Math.min(SESSION_SIZE - sessionWords.length, newWords.length)
-    for (const w of newWords.slice(0, newSlots)) {
-      sessionWords.push(w)
-    }
-
-    if (sessionWords.length === 0) {
-      // 今日已全部複習完畢或無單字
-      redirect('/')
-    }
-
-    // 用所有單字當干擾選項池
+    // 用所有單字當干擾選項池（也作為練習模式的選題來源）
     const allWords: QuizWord[] = swResult.data
       .map(sw => {
         const w = wordDetailMap.get(sw.word_id)
@@ -171,6 +160,29 @@ export default async function VisitPage({
         }
       })
       .filter((w): w is QuizWord => w !== null)
+
+    // 選出本次 session 單字
+    let sessionWords: QuizWord[]
+    if (isPractice) {
+      // 練習模式：從所有單字隨機選 10 題（不依 SRS 排程）
+      const shuffled = [...allWords].sort(() => Math.random() - 0.5)
+      sessionWords = shuffled.slice(0, SESSION_SIZE)
+    } else {
+      // 正常模式：最多 5 個複習 + 補滿新字，合計最多 10 個
+      sessionWords = []
+      for (const w of reviewDueWords.slice(0, MAX_REVIEW)) {
+        sessionWords.push(w)
+      }
+      const newSlots = Math.min(SESSION_SIZE - sessionWords.length, newWords.length)
+      for (const w of newWords.slice(0, newSlots)) {
+        sessionWords.push(w)
+      }
+    }
+
+    if (sessionWords.length === 0) {
+      // 今日已全部複習完畢或無單字
+      redirect('/')
+    }
 
     const questions = generateSessionQuestions(sessionWords, allWords)
     const newWordsCount = sessionWords.filter(
@@ -189,6 +201,7 @@ export default async function VisitPage({
         questions={questions}
         newWordsCount={newWordsCount}
         reviewWordsCount={reviewWordsCount}
+        isPractice={isPractice}
       />
     )
   } catch (error) {
