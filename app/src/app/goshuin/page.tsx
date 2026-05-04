@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { TransitionLink } from '@/components/transition-link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -27,12 +27,12 @@ export default async function GoshuinPage() {
       <main className="pixel-art relative w-full max-w-[480px] min-h-[100dvh] pb-24 flex flex-col bg-stone-950">
         {/* 頂 nav */}
         <nav className="sticky top-0 z-10 w-full flex items-center justify-between px-4 py-3 bg-stone-900/95 backdrop-blur-sm border-b border-stone-800">
-          <Link
+          <TransitionLink
             href="/"
             className="font-pixel text-sm text-stone-400 hover:text-stone-100 transition-colors"
           >
             ← 返回
-          </Link>
+          </TransitionLink>
           <span className="font-pixel text-base font-bold tracking-widest text-stone-100">
             🎎 御朱印帳
           </span>
@@ -80,18 +80,18 @@ export default async function GoshuinPage() {
 
           {/* 底部 footer */}
           <div className="mt-8 flex flex-col gap-1">
-            <Link
+            <TransitionLink
               href="/omikuji"
               className="block text-center font-pixel text-xs text-amber-400 hover:text-amber-300 transition-colors py-2"
             >
               神籤紀錄 →
-            </Link>
-            <Link
+            </TransitionLink>
+            <TransitionLink
               href="/me"
               className="block text-center font-pixel text-xs text-stone-400 hover:text-stone-200 transition-colors py-2"
             >
               狐狸進化 →
-            </Link>
+            </TransitionLink>
           </div>
         </div>
       </main>

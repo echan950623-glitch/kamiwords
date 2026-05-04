@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { TransitionLink } from '@/components/transition-link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -24,12 +24,12 @@ export default async function OmikujiHistoryPage() {
       <main className="pixel-art relative w-full max-w-[480px] min-h-[100dvh] pb-24 flex flex-col bg-stone-950">
         {/* 頂 nav */}
         <nav className="sticky top-0 z-10 w-full flex items-center justify-between px-4 py-3 bg-stone-900/95 backdrop-blur-sm border-b border-stone-800">
-          <Link
+          <TransitionLink
             href="/"
             className="font-pixel text-sm text-stone-400 hover:text-stone-100 transition-colors"
           >
             ← 返回
-          </Link>
+          </TransitionLink>
           <span className="font-pixel text-base font-bold tracking-widest text-stone-100">
             🎴 神籤帳
           </span>
@@ -100,7 +100,7 @@ function EmptyState() {
       <p className="font-pixel text-stone-600 text-xs">
         回首頁等招財貓出現，或完成參拜後 60% 機率彈籤
       </p>
-      <Link
+      <TransitionLink
         href="/"
         className="mt-4 px-5 h-9 flex items-center font-pixel text-xs font-semibold rounded-md text-white"
         style={{
@@ -109,7 +109,7 @@ function EmptyState() {
         }}
       >
         回首頁
-      </Link>
+      </TransitionLink>
     </div>
   )
 }

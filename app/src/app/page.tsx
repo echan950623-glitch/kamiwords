@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { TransitionLink } from '@/components/transition-link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { isShrineUnlocked } from '@/lib/shrines'
@@ -350,7 +350,7 @@ export default async function HomePage({
           <span className="hidden sm:inline text-stone-400 truncate max-w-[120px]">
             {displayName}
           </span>
-          <Link href="/omikuji" className="hover:text-stone-100 transition-colors">神籤 🎴</Link>
+          <TransitionLink href="/omikuji" className="hover:text-stone-100 transition-colors">神籤 🎴</TransitionLink>
           <button className="hover:text-stone-100 transition-colors">御朱印帳 📖</button>
           <SignOutButton />
         </div>
@@ -428,7 +428,7 @@ export default async function HomePage({
             </div>
 
             <div className="w-full flex flex-col gap-3 mt-2">
-              <Link
+              <TransitionLink
                 href={`/shrine/${shrine.slug}/visit`}
                 className="w-full h-12 flex items-center justify-center font-pixel text-base font-semibold rounded-xl text-white transition-all active:scale-95"
                 style={{
@@ -437,13 +437,13 @@ export default async function HomePage({
                 }}
               >
                 今日參拜 🙏
-              </Link>
-              <Link
+              </TransitionLink>
+              <TransitionLink
                 href="/shrines?mode=practice"
                 className="w-full h-12 flex items-center justify-center font-pixel text-base font-semibold rounded-xl border border-amber-700/60 bg-amber-950/30 text-amber-400 hover:bg-amber-950/50 transition-colors active:scale-95"
               >
                 自由練習 ⚔️
-              </Link>
+              </TransitionLink>
             </div>
           </>
         ) : (
@@ -471,9 +471,9 @@ export default async function HomePage({
           const cls =
             'flex flex-col items-center gap-1 font-pixel text-xs text-stone-400 hover:text-stone-100 transition-colors'
           return href ? (
-            <Link key={label} href={href} className={cls}>
+            <TransitionLink key={label} href={href} className={cls}>
               {inner}
-            </Link>
+            </TransitionLink>
           ) : (
             <button key={label} className={cls + ' opacity-50 cursor-not-allowed'} disabled>
               {inner}

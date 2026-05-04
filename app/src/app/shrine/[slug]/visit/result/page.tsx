@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { TransitionLink } from '@/components/transition-link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -209,35 +209,35 @@ export default async function ResultPage({
             <div className="w-full flex flex-col gap-3">
               {isPractice ? (
                 <>
-                  <Link
+                  <TransitionLink
                     href={`/shrine/${params.slug}/visit?practice=1`}
                     className="w-full h-12 flex items-center justify-center rounded-xl font-pixel text-base font-semibold text-white transition-all active:scale-95"
                     style={{ backgroundColor: shrine.theme_color }}
                   >
                     再練一場 ⚔️
-                  </Link>
-                  <Link
+                  </TransitionLink>
+                  <TransitionLink
                     href="/"
                     className="w-full h-12 flex items-center justify-center rounded-xl border border-stone-700 font-pixel text-stone-300 hover:bg-stone-800 text-base font-semibold transition-colors"
                   >
                     回首頁 ⛩
-                  </Link>
+                  </TransitionLink>
                 </>
               ) : (
                 <>
-                  <Link
+                  <TransitionLink
                     href={`/shrine/${params.slug}/visit`}
                     className="w-full h-12 flex items-center justify-center rounded-xl font-pixel text-base font-semibold text-white transition-all active:scale-95"
                     style={{ backgroundColor: shrine.theme_color }}
                   >
                     繼續參拜 🙏
-                  </Link>
-                  <Link
+                  </TransitionLink>
+                  <TransitionLink
                     href="/"
                     className="w-full h-12 flex items-center justify-center rounded-xl border border-stone-700 font-pixel text-stone-300 hover:bg-stone-800 text-base font-semibold transition-colors"
                   >
                     回首頁 ⛩
-                  </Link>
+                  </TransitionLink>
                 </>
               )}
             </div>

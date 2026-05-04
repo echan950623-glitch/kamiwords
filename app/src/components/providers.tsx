@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState } from 'react'
+import { PageTransitionProvider } from '@/contexts/page-transition'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -18,7 +19,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <PageTransitionProvider>
+        {children}
+      </PageTransitionProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   )

@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { TransitionLink } from '@/components/transition-link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -43,12 +43,12 @@ export default async function MePage() {
       <main className="pixel-art relative w-full max-w-[480px] min-h-[100dvh] pb-24 flex flex-col bg-stone-950">
         {/* 頂 nav */}
         <nav className="sticky top-0 z-10 w-full flex items-center justify-between px-4 py-3 bg-stone-900/95 backdrop-blur-sm border-b border-stone-800">
-          <Link
+          <TransitionLink
             href="/"
             className="font-pixel text-sm text-stone-400 hover:text-stone-100 transition-colors"
           >
             ← 返回
-          </Link>
+          </TransitionLink>
           <span className="font-pixel text-base font-bold tracking-widest text-stone-100">
             👤 我的
           </span>
@@ -172,7 +172,7 @@ export default async function MePage() {
           ) : (
             <div className="space-y-2">
               {recentVisits.map(visit => (
-                <Link
+                <TransitionLink
                   key={visit.id}
                   href={`/shrine/${visit.shrine_slug}/visit/result?visitId=${visit.id}`}
                   className="block bg-stone-900/60 rounded-xl border border-stone-800 px-4 py-3 hover:border-stone-600 transition-colors active:scale-[0.98]"
@@ -200,7 +200,7 @@ export default async function MePage() {
                       {visit.correct_count} / {visit.total_questions} 題
                     </span>
                   </div>
-                </Link>
+                </TransitionLink>
               ))}
             </div>
           )}

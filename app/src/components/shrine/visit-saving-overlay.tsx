@@ -18,7 +18,7 @@ export function VisitSavingOverlay() {
   useEffect(() => {
     const msgTimer = setInterval(() => {
       setMsgIdx(i => (i + 1) % MESSAGES.length)
-    }, 500)
+    }, 900)
 
     // 短暫 delay 後觸發 CSS transition，讓瀏覽器有一幀渲染起始狀態
     const progTimer = setTimeout(() => setProgress(95), 50)
@@ -73,7 +73,7 @@ export function VisitSavingOverlay() {
           className="h-full bg-amber-400 rounded-full"
           style={{
             width: `${progress}%`,
-            transition: 'width 2s ease-out',
+            transition: 'width 4s ease-out',
           }}
         />
       </div>

@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { TransitionLink } from '@/components/transition-link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getShrinesWithUnlockStatus } from '@/lib/shrines'
@@ -27,12 +27,12 @@ export default async function ShrinesPage({
         <main className="pixel-art relative w-full max-w-[480px] min-h-[100dvh] pb-24 flex flex-col bg-stone-950">
           {/* Header */}
           <nav className="w-full flex items-center justify-between px-4 py-3 border-b border-stone-800">
-            <Link
+            <TransitionLink
               href="/"
               className="font-pixel text-stone-400 hover:text-stone-100 text-sm transition-colors"
             >
               ← 返回
-            </Link>
+            </TransitionLink>
             <span className="font-pixel text-base font-bold tracking-widest text-stone-100">
               {isPractice ? '⚔️ 自由練習' : '⛩ 神社一覽'}
             </span>
@@ -106,9 +106,9 @@ export default async function ShrinesPage({
               return disabled ? (
                 <div key={shrine.id}>{card}</div>
               ) : (
-                <Link key={shrine.id} href={isPractice ? `/shrine/${shrine.slug}/visit?practice=1` : `/?shrine=${shrine.slug}`}>
+                <TransitionLink key={shrine.id} href={isPractice ? `/shrine/${shrine.slug}/visit?practice=1` : `/?shrine=${shrine.slug}`}>
                   {card}
-                </Link>
+                </TransitionLink>
               )
             })}
           </section>
