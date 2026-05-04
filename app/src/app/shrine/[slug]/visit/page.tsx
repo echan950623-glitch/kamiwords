@@ -57,10 +57,16 @@ export default async function VisitPage({
 
     const shrine = shrineResult.data
 
-    // 抓此神社所有單字 ID（依位置排序）
+    // 抓此神社所有單字（nested select，避免 .in(wordIds) 在 N3+ 炸 URL 長度限制）
+    type SwRow = {
+      word_id: string
+      position: number
+      words: { id: string; lemma: string; meaning_zh: string; meta: Record<string, unknown> } | null
+    }
+
     const swResult = await supabase
       .from('shrine_words')
-      .select('word_id, position')
+      .select('word_id, position, words(id, lemma, meaning_zh, meta)')
       .eq('shrine_id', shrine.id)
       .order('position')
 
@@ -73,21 +79,7 @@ export default async function VisitPage({
       redirect('/')
     }
 
-    const wordIds = swResult.data.map(sw => sw.word_id)
-
-    // 批次抓單字內容（lemma / meaning_zh / meta.kana）
-    const wordsResult = await supabase
-      .from('words')
-      .select('id, lemma, meaning_zh, meta')
-      .in('id', wordIds)
-
-    if (wordsResult.error || !wordsResult.data) {
-      console.error('【VisitPage】抓單字內容失敗:', {
-        message: wordsResult.error?.message ?? 'data is null',
-        timestamp: new Date().toISOString(),
-      })
-      redirect('/')
-    }
+    const rows = swResult.data as unknown as SwRow[]
 
     // 抓使用者燈籠（此神社）
     const lanternsResult = await supabase
@@ -114,14 +106,14 @@ export default async function VisitPage({
 
     // 按神社位置排序建立 QuizWord pool
     const wordDetailMap = new Map(
-      wordsResult.data.map((w: Record<string, unknown>) => [w.id as string, w])
+      rows.filter(r => r.words).map(r => [r.word_id, r.words!])
     )
 
     const now = new Date()
     const reviewDueWords: QuizWord[] = []
     const newWords: QuizWord[] = []
 
-    for (const sw of swResult.data) {
+    for (const sw of rows) {
       const w = wordDetailMap.get(sw.word_id)
       if (!w) continue
 
@@ -147,7 +139,7 @@ export default async function VisitPage({
     }
 
     // 用所有單字當干擾選項池（也作為練習模式的選題來源）
-    const allWords: QuizWord[] = swResult.data
+    const allWords: QuizWord[] = rows
       .map(sw => {
         const w = wordDetailMap.get(sw.word_id)
         if (!w) return null
