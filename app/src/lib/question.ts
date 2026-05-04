@@ -73,7 +73,7 @@ export function generateQuestion(
       return {
         word,
         type,
-        stimulus: `${word.lemma}（${word.kana}）`,
+        stimulus: word.lemma === word.kana ? word.lemma : `${word.lemma}（${word.kana}）`,
         prompt: '中文意思是？',
         choices,
         correctIndex,
