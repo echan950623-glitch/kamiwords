@@ -96,7 +96,7 @@ export function QuestionCard({
         type="button"
         onClick={() => setFeedbackOpen(true)}
         aria-label="回報這題有問題"
-        className="absolute top-0 right-0 text-stone-600 hover:text-amber-400 transition-colors text-lg leading-none"
+        className="absolute top-0 right-0 w-9 h-9 flex items-center justify-center rounded-full bg-stone-800/70 hover:bg-amber-500/20 text-base leading-none border border-stone-700 hover:border-amber-500/60 transition-all active:scale-90 z-10"
       >
         ⚠️
       </button>
