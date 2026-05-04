@@ -37,6 +37,7 @@ export function OmikujiResultTrigger({
     const timer = setTimeout(async () => {
       try {
         const result = await drawOmikujiAction('result_page')
+        if (result.alreadyDrawn) return
         setDraw(result)
         setOpen(true)
       } catch (error) {
