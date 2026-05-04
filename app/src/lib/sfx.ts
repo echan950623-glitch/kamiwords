@@ -33,8 +33,9 @@ export function play(name: SfxName, volume = 0.6) {
   lastPlay[name] = now
   try {
     if (!cache[name]) cache[name] = new Audio(`/sfx/${name}.mp3`)
-    const audio = cache[name].cloneNode(true) as HTMLAudioElement
+    const audio = cache[name]
     audio.volume = volume
+    audio.currentTime = 0
     audio.play().catch((e: unknown) => {
       console.warn('【sfx】play 被瀏覽器阻擋或失敗:', name, e instanceof Error ? e.message : e)
     })
