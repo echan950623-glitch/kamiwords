@@ -89,18 +89,8 @@ export function QuestionCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -24 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="relative flex flex-col gap-6 w-full"
+      className="flex flex-col gap-6 w-full"
     >
-      {/* ⚠️ 回報按鈕 */}
-      <button
-        type="button"
-        onClick={() => setFeedbackOpen(true)}
-        aria-label="回報這題有問題"
-        className="absolute top-0 right-0 w-9 h-9 flex items-center justify-center rounded-full bg-stone-800/70 hover:bg-amber-500/20 text-base leading-none border border-stone-700 hover:border-amber-500/60 transition-all active:scale-90 z-10"
-      >
-        ⚠️
-      </button>
-
       {/* 進度條 */}
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-stone-500">
@@ -159,6 +149,19 @@ export function QuestionCard({
             </button>
           )
         })}
+      </div>
+
+      {/* 題目回報 — 4 選項下方 */}
+      <div className="flex justify-center pt-4">
+        <button
+          type="button"
+          onClick={() => setFeedbackOpen(true)}
+          aria-label="回報這題有問題"
+          className="font-pixel text-xs text-stone-500 hover:text-amber-300 flex items-center gap-1.5 px-3 py-2 rounded-md border border-stone-800 hover:border-amber-500/40 bg-stone-900/40 hover:bg-stone-900/70 transition-colors active:scale-95"
+        >
+          <span className="text-base leading-none">⚠️</span>
+          <span>題目有問題？點此回報</span>
+        </button>
       </div>
 
       {/* 答題回饋 */}
