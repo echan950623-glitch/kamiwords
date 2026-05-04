@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { reportWordFeedbackAction } from '@/actions/feedback'
 
@@ -22,6 +22,15 @@ export function FeedbackModal({ wordId, isOpen, onClose }: FeedbackModalProps) {
   const [submitted, setSubmitted] = useState(false)
   const [showOther, setShowOther] = useState(false)
   const [comment, setComment] = useState('')
+
+  useEffect(() => {
+    if (isOpen) {
+      setSubmitting(false)
+      setSubmitted(false)
+      setShowOther(false)
+      setComment('')
+    }
+  }, [isOpen])
 
   const handleReason = async (reason: 'translation' | 'kana' | 'pos' | 'other') => {
     if (reason !== 'other') {
