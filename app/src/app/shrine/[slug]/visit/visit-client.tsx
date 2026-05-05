@@ -46,6 +46,16 @@ export function VisitClient({
     preloadConfetti()
   }, [])
 
+  useEffect(() => {
+    if (currentIndex === 0 || isSaving) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [currentIndex, isSaving])
+
   const currentQuestion = questions[currentIndex]
   const isLast = currentIndex === questions.length - 1
 
@@ -115,7 +125,12 @@ export function VisitClient({
       {/* Header */}
       <nav className="w-full flex items-center justify-between px-4 py-3 border-b border-stone-800 mb-8">
         <button
-          onClick={() => router.push('/')}
+          onClick={() => {
+            if (currentIndex > 0 && !isSaving) {
+              if (!confirm('確定要離開嗎？答題進度不會儲存')) return
+            }
+            router.push('/')
+          }}
           className="text-stone-400 hover:text-stone-100 text-sm transition-colors"
         >
           ← 離開

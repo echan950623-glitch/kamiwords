@@ -5,6 +5,16 @@ import { createClient } from '@/lib/supabase/server'
 import { ResultConfetti } from './result-confetti'
 import { ResultCeremonyWrapper } from './result-ceremony-wrapper'
 
+interface WrongAnswerRow {
+  word_id: string
+  question_type: string
+  words: {
+    lemma: string
+    meaning_zh: string
+    meta: Record<string, unknown> | null
+  } | null
+}
+
 export default async function ResultPage({
   params,
   searchParams,
@@ -36,8 +46,8 @@ export default async function ResultPage({
     const newFoxStage = parsedFoxStage !== null && !isNaN(parsedFoxStage) ? parsedFoxStage : null
     const isPractice = searchParams.practice === '1'
 
-    // Phase 2：visits + shrines 並行（都只需要 user.id / params.slug，互不依賴）
-    const [visitResult, shrineResult] = await Promise.all([
+    // Phase 2：visits + shrines + wrongAnswers 並行（互不依賴）
+    const [visitResult, shrineResult, wrongAnswersResult] = await Promise.all([
       searchParams.visitId && !hasSaveError
         ? supabase
             .from('visits')
@@ -47,6 +57,13 @@ export default async function ResultPage({
             .single()
         : Promise.resolve({ data: null, error: null }),
       supabase.from('shrines').select('id, name_jp, theme_color').eq('slug', params.slug).single(),
+      searchParams.visitId && !hasSaveError
+        ? supabase
+            .from('visit_answers')
+            .select('word_id, question_type, words(lemma, meaning_zh, meta)')
+            .eq('visit_id', searchParams.visitId)
+            .eq('is_correct', false)
+        : Promise.resolve({ data: [] as unknown[], error: null }),
     ])
 
     if (shrineResult.error || !shrineResult.data) {
@@ -59,6 +76,14 @@ export default async function ResultPage({
     }
 
     const shrine = shrineResult.data
+
+    if (wrongAnswersResult.error) {
+      console.error('【ResultPage】抓答錯字失敗:', {
+        message: wrongAnswersResult.error.message,
+        timestamp: new Date().toISOString(),
+      })
+    }
+    const wrongAnswers = (wrongAnswersResult.data ?? []) as unknown as WrongAnswerRow[]
 
     let correct = 0
     let total = 0
@@ -197,6 +222,40 @@ export default async function ResultPage({
                   盞燈籠 🏮
                 </p>
               </div>
+            )}
+
+            {/* 答錯字回顧（有 visitId 且無儲存錯誤時顯示） */}
+            {searchParams.visitId && !hasSaveError && (
+              wrongAnswers.length === 0 ? (
+                <div className="w-full text-center py-6 px-4">
+                  <span className="text-4xl">🌸</span>
+                  <p className="font-pixel text-amber-300 mt-2">神社靜謐</p>
+                  <p className="text-stone-400 text-xs mt-1">本場全對，無需複習</p>
+                </div>
+              ) : (
+                <div className="w-full space-y-2">
+                  <p className="font-pixel text-xs text-stone-400">
+                    📝 需要再見一次（{wrongAnswers.length} 個）
+                  </p>
+                  {wrongAnswers.map((w) => {
+                    const lemma = w.words?.lemma ?? ''
+                    const meaning_zh = w.words?.meaning_zh ?? ''
+                    const kana = (w.words?.meta as Record<string, unknown> | null)?.reading as string | undefined
+                    return (
+                      <div key={w.word_id} className="rounded-lg border border-stone-800 bg-stone-900/60 px-4 py-3">
+                        <div className="flex justify-between items-baseline">
+                          <span className="font-pixel text-xl font-bold text-stone-100">{lemma}</span>
+                          <span className="font-pixel text-xs text-amber-400">下次見</span>
+                        </div>
+                        {kana && kana !== lemma && (
+                          <div className="font-pixel text-sm text-stone-400 mt-0.5">{kana}</div>
+                        )}
+                        <div className="text-sm text-stone-300 mt-1">{meaning_zh}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
             )}
 
             {hasSaveError && (

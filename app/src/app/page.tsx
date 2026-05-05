@@ -25,6 +25,7 @@ interface LanternStats {
   items: LanternItem[]
   dueCount: number
   newCount: number
+  masteredCount: number
 }
 
 interface TodayProgress {
@@ -97,7 +98,7 @@ async function getLanternStats(
       .order('position')
 
     if (swResult.error || !swResult.data?.length) {
-      return { items: [], dueCount: 0, newCount: 0 }
+      return { items: [], dueCount: 0, newCount: 0, masteredCount: 0 }
     }
 
     const allWordIds = swResult.data.map((sw: Record<string, unknown>) => sw.word_id as string)
@@ -157,10 +158,12 @@ async function getLanternStats(
 
     let dueCount = 0
     let newCount = 0
+    let masteredCount = 0
     allWordIds.forEach(id => {
       const s = getStatus(id)
       if (s === 'due') dueCount++
       if (s === 'new') newCount++
+      if (s === 'mastered') masteredCount++
     })
 
     const items: LanternItem[] = first25Ids.map(wordId => {
@@ -173,13 +176,13 @@ async function getLanternStats(
       }
     })
 
-    return { items, dueCount, newCount }
+    return { items, dueCount, newCount, masteredCount }
   } catch (error) {
     console.error('【首頁-燈籠】未預期錯誤:', {
       message: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString(),
     })
-    return { items: [], dueCount: 0, newCount: 0 }
+    return { items: [], dueCount: 0, newCount: 0, masteredCount: 0 }
   }
 }
 
@@ -322,6 +325,7 @@ export default async function HomePage({
 
   const userEmail = user.email ?? ''
   const displayName = user.user_metadata?.full_name ?? userEmail.split('@')[0]
+  const masteryPct = shrine ? Math.round(((lanternStats?.masteredCount ?? 0) / shrine.wordCount) * 100) : 0
   const goalReached = (todayProgress?.wordsStudied ?? 0) >= (todayProgress?.goal ?? 30)
 
   return (
@@ -356,6 +360,15 @@ export default async function HomePage({
         </div>
       </nav>
 
+      {/* Streak 警示 — 有 streak 但今日尚未參拜 */}
+      {(streak?.current_streak ?? 0) > 0 && (todayProgress?.wordsStudied ?? 0) === 0 && (
+        <div className="relative z-10 bg-amber-900/30 border-y border-amber-700/40 px-4 py-2">
+          <p className="font-pixel text-xs text-amber-300 text-center">
+            🔥 已連續 {streak!.current_streak} 天，今日尚未參拜
+          </p>
+        </div>
+      )}
+
       {/* 主內容 — pt-[18vh] 把 UI 推到背景中段 */}
       <section className="relative z-10 w-full max-w-sm px-4 pt-[18vh] flex flex-col items-center gap-4 mx-auto">
         {shrine ? (
@@ -376,7 +389,12 @@ export default async function HomePage({
             />
 
             {/* 狐狸：依 user_fox.stage 動態載入（預設 1） */}
-            <Fox state="idle" stage={foxStage ?? 1} />
+            <Fox state={goalReached ? 'happy' : 'idle'} stage={foxStage ?? 1} />
+            {goalReached && (
+              <p className="font-pixel text-xs text-amber-300 text-center">
+                ✨ 今日修練圓滿，明日繼續精進 🌸
+              </p>
+            )}
 
             {/* 今日進度 */}
             <div className="w-full space-y-1.5">
@@ -420,10 +438,10 @@ export default async function HomePage({
                 <span className="font-pixel text-xs text-stone-400">待複習</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
-                <span className="font-pixel font-semibold" style={{ color: '#F4F1E8' }}>
-                  {lanternStats?.newCount ?? shrine.wordCount} 個
+                <span className="font-pixel font-semibold text-amber-400">
+                  {masteryPct}%
                 </span>
-                <span className="font-pixel text-xs text-stone-400">未學習</span>
+                <span className="font-pixel text-xs text-stone-400">進度</span>
               </div>
             </div>
 
