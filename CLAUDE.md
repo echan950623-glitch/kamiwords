@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-04 22:44 — Sprint X.14 御守袋 + 我的頁面完成
+**最後更新**：2026-05-05 01:10 — Sprint X.19 全局頁面轉場 + 參拜儀式調速（commit `1bda0e5`）
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -43,6 +43,12 @@
 - ✅ **Sprint X.12 — 自由練習 + 題目回報**：`018_practice_and_feedback.sql`（`complete_visit` 加 `p_is_practice` 參數、`visits.is_practice` column、`word_feedback` 表 + RLS）、首頁底 nav「⚔️ 練習」enable + 自由練習按鈕連 `/shrines?mode=practice`、`/shrines` practice mode（鎖定神社也可練、卡片連 `?practice=1`）、visit page 隨機選題（不依 SRS）、`<FeedbackModal>` 4 個 quick reason + textarea + 關閉重置狀態、question-card 右上角 ⚠️ 觸發 FeedbackModal、result page 練習版（隱藏 streak/燈籠，顯示「再練一場」）、全程不影響 SRS/streak/goshuin/fox
 - ✅ **Sprint X.13（hotfix）— visit nested select bug fix + theme_color polish**：`visit/page.tsx` 把 `.in('id', wordIds)` 改成 `shrine_words.select('word_id, position, words(...)')` nested select（N3+ 865+ UUID 會炸 REST API URL limit）；`011b_shrine_theme_color_polish.sql`（kasuga #6B4423→#D9534F 朱紅、nikko #1C1410→#E8B547 金色，原色在黑底幾乎不可見）
 - ✅ **Sprint X.14 — 御守袋 + 我的頁面**：`lib/goshuin.ts`（`getShrinesWithGoshuinStatus`）、`lib/profile.ts`（`getUserStats` 8 並行 query + `getRecentVisits`）、`/goshuin`（御朱印帳：10 神社卡 + stamp 圖片 + 進度條 + 頂部統計）、`/me`（個人戰績：頭像 + fox 進化卡 + 4 統計格 + 正確率 bar + 最近 5 場 + 紅色登出鈕）、首頁底 nav「御守袋」「我的」全部 enabled
+- ✅ **Sprint X.15 — UX polish**：question-card 題型提示字 text-xs/stone-400 → text-sm/amber-400（金黃醒目）；`question.ts` kanji_to_zh stimulus 純假名單字（lemma === reading）不再印「あいさつ（あいさつ）」重複；翻譯 lint 順手修 リポート → 報告/報導、日焼け → 曬傷
+- ✅ **X.16 ⚠️ 回報按鈕重定位**：question-card 從右上角絕對定位圓圈 → 選項列下方 inline 文字按鈕（avoid 被進度條遮擋）
+- ✅ **fix 結算頁神籤一天只彈一次**：OmikujiResultTrigger mount 時先呼叫 getTodayOmikuji；alreadyDrawn=true 不開 modal
+- ✅ **fix sfx 音效重疊**：lib/sfx.ts cloneNode → 模組層 Map 快取單一 Audio 實例 + stop-and-restart（pause + currentTime=0 + play）
+- ✅ **Sprint X.18 — Q10 等待轉場「參拜儀式」動畫**：`<VisitSavingOverlay>` 全屏黑底 3-phase 鳥居淡入 → 狐狸 bounce → goshuin-stamp spring drop + stamp.mp3，遮蔽 saveVisit ~500-800ms 等待
+- ✅ **Sprint X.19 — 全局頁面轉場系統 + 儀式調速**：PageTransitionProvider context 包 router push/replace 攔截導航、PageTransitionOverlay 掛 providers root、TransitionLink 取代 next/link（首頁 / 神社一覽 / /omikuji / /goshuin / /me / result page 全部 swap，剩 not-found 沒換無關緊要）；VisitSavingOverlay 動畫 duration 拉長避免太急
 
 **進行中**：
 - ⏳ Cowork Chrome 驗 X.3：招財貓 30% 觸發 + 抽籤 modal + /omikuji 歷史 + 結算頁 60% 觸發

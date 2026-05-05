@@ -3,6 +3,129 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-05 01:10 — Sprint X.19 全局頁面轉場動畫 + 參拜儀式調速
+
+### 做了什麼
+
+- **PageTransitionProvider**：React Context + useRouter 包 push/replace，攔截導航 → 先播 overlay 再實際跳頁
+- **PageTransitionOverlay**：全屏黑底 Framer Motion fade-in/out，掛在 `providers.tsx` root
+- **TransitionLink**：`<a>` 替代 `<Link>`，點擊 → trigger transition → 延遲跳頁（300ms）
+- **providers.tsx**：接入 PageTransitionProvider + VisitSavingOverlay
+- **VisitSavingOverlay 速度調慢**：torii/fox/stamp 動畫 duration 拉長，避免動畫太急看不清楚
+- **TransitionLink 替換清單**：`page.tsx` 首頁 CTA + 底 nav、`shrines/page.tsx` 神社卡片導航點
+- commit `1bda0e5`：`feat(ui): Sprint X.19 — 全局頁面轉場動畫 + 參拜儀式動畫調速`
+
+### 卡在哪 / 待決定
+
+- 無
+
+### 下次開工先做
+
+- XunC Chrome 驗收：首頁 → 神社一覽 → 答題 → 結算，確認頁面間有平順黑色淡入淡出
+- 確認參拜儀式動畫速度是否符合預期
+
+---
+
+## 2026-05-05 01:00 — Sprint X.18 Q10 等待轉場「參拜儀式」動畫
+
+### 做了什麼
+
+- **VisitSavingOverlay 組件（新）**：全屏黑底，3-phase 序列動畫：① 鳥居圖淡入上移（framer spring）→ ② 狐狸圖 bounce drop → ③ goshuin-stamp.png spring drop-in + stamp.mp3 音效；`status` prop 控制顯示（`saving` / `done` / `hidden`）
+- **visit-client.tsx**：`isSaving` 狀態接到 VisitSavingOverlay `status`；saveVisitAction 完成後 `status='done'`，動畫跑完後才跳 result 頁；QuestionCard 改為常駐渲染（isSaving 時保持 DOM 不消失，避免 layout shift）
+- commit `6aa8c1c`：`feat(ux): Sprint X.18 — Q10 等待轉場「參拜儀式」動畫`
+
+### 卡在哪 / 待決定
+
+- 動畫速度偏快 → X.19 同 session 順手調慢
+
+### 下次開工先做
+
+- 驗 overlay 是否覆蓋整個螢幕（含 safe-area），手機測
+
+---
+
+## 2026-05-05 00:43 — fix(sfx) 音效重疊修復：cloneNode → stop-and-restart
+
+### 做了什麼
+
+- **root cause**：`lib/sfx.ts` 原用 `audio.cloneNode(true)` 每次產新實例，200ms debounce 不足以防止快速連點時多個實例並行播放
+- **修法**：改為模組層級 `Map<string, HTMLAudioElement>` 快取單一實例；`playSound()` 改成 `audio.pause()` + `audio.currentTime = 0` + `audio.play()`（stop-and-restart）— 同一音效重新播，舊實例自動停止
+- `question-card.tsx` 和 `visit-client.tsx` 呼叫方式不變（介面相容）
+- commit `da1c5f2`：`fix(sfx): 音效重疊 — 換成 stop-and-restart`
+
+### 卡在哪 / 待決定
+
+- 無
+
+### 下次開工先做
+
+- 手機快速連答確認不再重疊
+
+---
+
+## 2026-05-05 00:23 — fix(omikuji) 結算頁神籤一天只彈一次
+
+### 做了什麼
+
+- **root cause**：`OmikujiResultTrigger` 每次 result 頁 mount 都呼叫 `drawOmikujiAction`；`draw_omikuji` RPC 雖有 unique on-conflict，但 action 回傳成功 → component 直接開 modal，不管是否「今天已抽過」
+- **修法**：`OmikujiResultTrigger` mount 時先呼叫 `getTodayOmikuji()`；若 `alreadyDrawn === true` → 不開 modal；只有 null（今天未抽）時才 `drawOmikujiAction` + 開 modal
+- 行為：同一天第 2+ 場結算頁 → 神籤 modal 不再彈出
+- commit `00d5104`：`fix(omikuji): 結算頁神籤一天只彈一次`
+
+### 卡在哪 / 待決定
+
+- 無
+
+### 下次開工先做
+
+- 驗收：答完第一場（modal 彈出）→ 立刻再答一場 → 結算頁不再彈
+
+---
+
+## 2026-05-05 00:12 — ui(question-card) ⚠️ 回報按鈕重定位
+
+### 做了什麼
+
+- **修改**：`question-card.tsx` ⚠️ 回報按鈕從右上角絕對定位圓圈改成選項列下方行內文字按鈕
+- 舊版（X.15 初版）：`absolute top-2 right-2` 圓圈圖示，容易被答題 UI 遮擋
+- 新版：選項 `<div>` 下方加一行 `⚠️ 回報這題` 文字按鈕，`text-xs text-stone-500 hover:text-amber-400`
+- FeedbackModal 觸發邏輯不變，wordId 傳遞不變
+- commit `3269605`：`ui(question-card): ⚠️ 回報按鈕從右上角圓圈 -> 選項下方文字按鈕`
+
+### 卡在哪 / 待決定
+
+- 無
+
+### 下次開工先做
+
+- 確認 FeedbackModal 在新按鈕位置下仍正常彈出
+
+---
+
+## 2026-05-04 23:50 — Sprint X.15 + fix(question) kanji_to_zh 假名重複
+
+### 做了什麼
+
+**Sprint X.15 — question-card.tsx 題型提示字視覺優化**
+- 題型提示字（如「漢字→中文」「假名→中文」）font size 從 `text-xs` 放大到 `text-sm`
+- 顏色從 `text-stone-400` 改 `text-amber-400`（金黃色），與神社主題更一致
+- commit 含在 kanji_to_zh fix 同次
+
+**fix — `question.ts` kanji_to_zh stimulus 純假名單字重複顯示**
+- **root cause**：`kanji_to_zh` 題型 stimulus 組合為 `${lemma}（${reading}）`；對純假名單字（lemma === reading）→ 顯示「あいさつ（あいさつ）」重複
+- **修法**：`question.ts` 中加判斷 `lemma === reading ? lemma : \`${lemma}（${reading}）\``
+- commit `903d5fb`：包含 X.15 視覺優化 + kanji_to_zh stimulus fix
+
+### 卡在哪 / 待決定
+
+- 無
+
+### 下次開工先做
+
+- 驗：找一個純假名 N5 字（如あいさつ）確認題目不再顯示重複假名
+
+---
+
 ## 2026-05-04 22:44 — Sprint X.14 御守袋 + 我的頁面
 
 ### 做了什麼
