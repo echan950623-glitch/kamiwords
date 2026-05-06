@@ -115,7 +115,6 @@ export function VisitClient({
       router.replace(
         `/shrine/${shrine.slug}/visit/result?correct=${finalCorrect}&total=${questions.length}&error=save_failed`
       )
-    } finally {
       setIsSaving(false)
     }
   }, [isLast, questions.length, shrine, newWordsCount, reviewWordsCount, isPractice, router])
