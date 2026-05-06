@@ -7,6 +7,7 @@ import { SignOutButton } from '@/components/auth/sign-out-button'
 import { LanternGrid, type LanternStatus, type LanternItem } from '@/components/shrine/lantern-grid'
 import { Fox } from '@/components/shrine/fox'
 import { ManekinekoFloating } from '@/components/omikuji/manekineko-floating'
+import { OpeningCutsceneTrigger } from '@/components/opening-cutscene-trigger'
 
 export const dynamic = 'force-dynamic'
 
@@ -249,9 +250,23 @@ async function getUserStreak(userId: string): Promise<StreakData> {
   }
 }
 
-/**
- * 抓 user_fox.stage（沒 row 預設 1，等第一次完成神社才 insert）
- */
+async function getUserVisitCount(userId: string): Promise<number> {
+  try {
+    const supabase = await createClient()
+    const r = await supabase
+      .from('visits')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    return r.count ?? 0
+  } catch (error) {
+    console.error('【首頁-VisitCount】未預期錯誤:', {
+      message: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString(),
+    })
+    return 0
+  }
+}
+
 async function getUserFoxStage(userId: string): Promise<number> {
   try {
     const supabase = await createClient()
@@ -313,15 +328,18 @@ export default async function HomePage({
 
   const shrine = await getShrineBySlug(activeSlug)
 
-  const [lanternStats, todayProgress, streak, foxStage, todayOmikuji] = shrine
+  const [lanternStats, todayProgress, streak, foxStage, todayOmikuji, visitsCount] = shrine
     ? await Promise.all([
         getLanternStats(shrine.id, user.id),
         getTodayProgress(user.id),
         getUserStreak(user.id),
         getUserFoxStage(user.id),
         getTodayOmikuji(supabase, user.id),
+        getUserVisitCount(user.id),
       ])
-    : [null, null, null, 1, null]
+    : [null, null, null, 1, null, 0]
+
+  const isFirstTime = (visitsCount as number) === 0
 
   const userEmail = user.email ?? ''
   const displayName = user.user_metadata?.full_name ?? userEmail.split('@')[0]
@@ -329,6 +347,8 @@ export default async function HomePage({
   const goalReached = (todayProgress?.wordsStudied ?? 0) >= (todayProgress?.goal ?? 30)
 
   return (
+    <>
+    <OpeningCutsceneTrigger firstTime={isFirstTime} />
     <div className="bg-black min-h-[100dvh] flex justify-center">
     <main
       className="pixel-art relative w-full max-w-[480px] min-h-[100dvh] pb-24 flex flex-col"
@@ -501,6 +521,7 @@ export default async function HomePage({
       </nav>
     </main>
     </div>
+    </>
   )
 }
 
