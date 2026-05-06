@@ -3,6 +3,26 @@
 > 每次工作結束前，由 Claude Code append 一條日誌。
 > 最新的在最上面。
 
+## 2026-05-06 20:25 — Sprint X.21 開場動畫 OpeningCutscene
+
+### 做了什麼
+
+- **opening-cutscene.tsx**：Framer Motion 全屏黑底動畫，3 段時序：⛩ spring drop → KamiWords LOGO fade → （新用戶）狐狸 slide-in + 玩法說明文字 fade-in
+- **opening-cutscene-trigger.tsx**：Client component，mount 時讀 `localStorage.kamiwords_opening_date`，不等於今日就顯示 cutscene；`onComplete` 寫入今日日期防重播
+- **page.tsx**：新增 `getUserVisitCount` helper（count query，不讀 rows）；整合進 `Promise.all`；`isFirstTime = visitsCount === 0` 傳給 trigger；JSX 最外層加 `<OpeningCutsceneTrigger firstTime={isFirstTime} />`
+- 跳過方式：點任意處、ESC 鍵、右上角 Skip 按鈕（stopPropagation 防雙觸發）
+- z-index 策略：z-[100] > PageTransitionOverlay z-50 > VisitSavingOverlay z-60（等等，z-60 < z-100 沒問題）
+
+### 卡在哪 / 待決定
+
+- 無卡點，tsc 無錯誤
+
+### 下次開工先做
+
+- Cowork Chrome 驗：清 localStorage → 首次登入看 4s 完整版；reload 看不播；隔天看 2s 簡短版
+
+---
+
 ## 2026-05-05 01:10 — Sprint X.19 全局頁面轉場動畫 + 參拜儀式調速
 
 ### 做了什麼

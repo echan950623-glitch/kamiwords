@@ -14,7 +14,7 @@
 
 ## 🔥 目前進度（每次工作結束前必須更新此區塊）
 
-**最後更新**：2026-05-05 01:10 — Sprint X.19 全局頁面轉場 + 參拜儀式調速（commit `1bda0e5`）
+**最後更新**：2026-05-06 20:25 — Sprint X.21 開場動畫 OpeningCutscene（commit `16908e2`）
 
 **已完成**：
 - ✅ 階段 0：產品設計、命名（KamiWords）、定價策略（月150 / 年1500 / 終身2000 限300名）
@@ -49,6 +49,7 @@
 - ✅ **fix sfx 音效重疊**：lib/sfx.ts cloneNode → 模組層 Map 快取單一 Audio 實例 + stop-and-restart（pause + currentTime=0 + play）
 - ✅ **Sprint X.18 — Q10 等待轉場「參拜儀式」動畫**：`<VisitSavingOverlay>` 全屏黑底 3-phase 鳥居淡入 → 狐狸 bounce → goshuin-stamp spring drop + stamp.mp3，遮蔽 saveVisit ~500-800ms 等待
 - ✅ **Sprint X.19 — 全局頁面轉場系統 + 儀式調速**：PageTransitionProvider context 包 router push/replace 攔截導航、PageTransitionOverlay 掛 providers root、TransitionLink 取代 next/link（首頁 / 神社一覽 / /omikuji / /goshuin / /me / result page 全部 swap，剩 not-found 沒換無關緊要）；VisitSavingOverlay 動畫 duration 拉長避免太急
+- ✅ **Sprint X.21 — 開場動畫 OpeningCutscene**：`<OpeningCutscene>` Framer Motion 全屏黑底動畫（鳥居 spring drop → LOGO fade → 新用戶版：狐狸 + 玩法說明）、`<OpeningCutsceneTrigger>` localStorage `kamiwords_opening_date` 防同天重播、首頁 server side `getUserVisitCount` 判新舊用戶（4s 完整版 vs 2s 簡短版）、ESC / 點任意處 / Skip 按鈕三種跳過方式、z-[100] 蓋過所有既有 overlay
 
 **進行中**：
 - ⏳ Cowork Chrome 驗 X.3：招財貓 30% 觸發 + 抽籤 modal + /omikuji 歷史 + 結算頁 60% 觸發
